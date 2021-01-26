@@ -8,7 +8,31 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 
+import okhttp3.FormBody;
+
 public class Parsers {
+    //**0** ETC
+    static protected FormBody paginaAvisoSkipBody(Document d) {
+        Element btContinuar = null;
+        for(Element e : d.getElementsByTag("input")) {
+            if(e.attr("value").equals("Continuar >>")) {
+                btContinuar = e;
+            }
+        }
+
+        if(btContinuar != null) {
+            final FormBody body_aviso = new FormBody.Builder()
+                    .add(btContinuar.attr("name").split(":")[0], btContinuar.attr("name").split(":")[0])
+                    .add(btContinuar.attr("name"), "Continuar >>")
+                    .add("javax.faces.ViewState", Sessao.javaxViewState(d))
+                    .build();
+            return body_aviso;
+        } else {
+            System.out.println(Sessao.logMSG + "botão para pular o aviso não encontrado");
+        }
+        return null;
+    }
+
     //**1** MAIN PAGE
     static protected ArrayList<Disciplina> mainPageDisciplinas(Document d) {
         ArrayList<Disciplina> disciplinas = new ArrayList<Disciplina>();

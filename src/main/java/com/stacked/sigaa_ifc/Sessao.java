@@ -30,7 +30,7 @@ public class Sessao {
     O SIGAA exige um valor chamado javaxViewState em qualquer request.
     Essa função pega um documento parsado pelo jsoup e retorna o ViewState dela.
      */
-    private static String javaxViewState(Document doc) {
+    static String javaxViewState(Document doc) {
         return doc.body().getElementById("javax.faces.ViewState").attr("value");
     }
 
@@ -142,6 +142,7 @@ public class Sessao {
     login(usuario, senha);
     Loga a sessão e um usuário não completo (com os dados disponíveis na página principal) se logar corretamente. Retorna null se acontecer algum erro
     */
+    //TODO Tenho que limpar esse código. Principalmente pular mais de 1 aviso
     public Usuario login(final String usuario, final String senha) {
         //JSESSIONID
         if(!novoJSESSIONID()) return null;
@@ -175,6 +176,7 @@ public class Sessao {
                     if((urlRedirecionado.substring(urlRedirecionado.length() - 1)) == "/") urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
 
                     if (Arrays.asList(urlsLogado).contains(urlRedirecionado)) {
+
                         //Redirecionado para uma das paginas comuns pos-login
                         System.out.println(logMSG + "logar() sem problemas");
                         dataLogin = System.currentTimeMillis();
@@ -183,7 +185,34 @@ public class Sessao {
                         Document d = Jsoup.parse(R.body().string());
                         usuarioSalvo = Parsers.mainPageDadosUsuario(d, url_base);
                         return usuarioSalvo;
+
+                    } else if(urlRedirecionado.contains(url_base + "/sigaa/telaAvisoLogon.jsf")) {
+
+                        //Redirecionado para algum aviso
+                        System.out.println(Sessao.logMSG + "Redirecionado para um aviso");
+
+                        Document d = Jsoup.parse(R.body().string());
+                        FormBody body_aviso = Parsers.paginaAvisoSkipBody(d);
+                        try {
+                            Response A = post("/sigaa/telaAvisoLogon.jsf", body_aviso);
+                            if (respostaValida(A)) {
+                                if (A.priorResponse() == null) {
+                                    //Nao redirecionado, nao logou.
+                                    System.out.println(logMSG + "Pular aviso sem resposta");
+                                } else {
+                                    //Redirecionado para a página principal
+                                    Document f = Jsoup.parse(A.body().string());
+                                    usuarioSalvo = Parsers.mainPageDadosUsuario(f, url_base);
+                                    return usuarioSalvo;
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return null;
+
                     } else {
+
                         //Redirecionado para outra pagina
                         System.out.println(logMSG + "logar() POST login redirecionado para a página errada? (" + urlRedirecionado + "). Conferindo logado()");
                         try {
@@ -207,6 +236,7 @@ public class Sessao {
                             return null;
                         }
                         return null;
+
                     }
                 }
             } else {

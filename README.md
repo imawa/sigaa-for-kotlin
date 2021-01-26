@@ -1,6 +1,6 @@
 # sigaa_ifc
 
-API não oficial para o SIGAA IFC (Sistema Integrado de Gestão de Atividades Acadêmicas) escrita em Java para o projeto de pesquisa "APP IFC campus Brusque: Uma proposta para organização da rotina escolar". Possívelmente também funciona no sistema dos outros campi.  
+API não oficial para o SIGAA IFC (Sistema Integrado de Gestão de Atividades Acadêmicas) escrita em Java para o projeto de pesquisa "APP IFC campus Brusque: Uma proposta para organização da rotina escolar". Possívelmente também funciona no sistema dos outros campi, sendo necessário apenas fazer algumas modificações no Parsers.java.
 
 ### Exemplo
 
