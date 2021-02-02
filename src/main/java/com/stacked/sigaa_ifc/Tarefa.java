@@ -17,8 +17,9 @@ public class Tarefa {
     private Date inicio, fim;
     private int envios;
     private boolean enviavel, enviada, corrigida;
+    private Disciplina disciplina;
 
-    Tarefa(String titulo, String descricao, Date inicio, Date fim, int envios, boolean enviavel, boolean enviada, boolean corrigida) {
+    Tarefa(Disciplina disciplina, String titulo, String descricao, Date inicio, Date fim, int envios, boolean enviavel, boolean enviada, boolean corrigida) {
         this.titulo = titulo;
         this.descricao = descricao;
         this.inicio = inicio;
@@ -27,6 +28,7 @@ public class Tarefa {
         this.enviavel = enviavel;
         this.enviada = enviada;
         this.corrigida = corrigida;
+        this.disciplina = disciplina;
     }
 
     public String titulo() { return titulo; }
@@ -39,6 +41,7 @@ public class Tarefa {
     public boolean corrigida() { return corrigida; }
     public boolean contemArquivo() { return (urlDownload != ""); }
     public String urlArquivo() { return urlDownload; }
+    public Disciplina disciplina() { return disciplina; }
 
     void definirIds(String id, String j_id) {
         this.id = id;

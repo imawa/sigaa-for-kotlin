@@ -41,14 +41,18 @@ public class Parsers {
         for(Element e : d.body().getElementsByClass("descricao")) {
             Element _e = e.child(0).child(1);
 
-            disciplinas.add(new Disciplina(_e.html(), _e.outerHtml().split("'")[3], _e.outerHtml().split("'")[5], _e.outerHtml().split("'")[11]));
+            Disciplina _d = new Disciplina(_e.html(), _e.outerHtml().split("'")[3], _e.outerHtml().split("'")[5], _e.outerHtml().split("'")[11]);
+            String _id = e.parent().nextElementSibling().child(0).id().replace("linha_", "");
+            _d.definirId(_id);
+
+            disciplinas.add(_d);
         }
 
         return disciplinas;
     }
 
     static protected Usuario mainPageDadosUsuario(Document d, String url_base) {
-        final ArrayList<Disciplina> disciplinas = Parsers.mainPageDisciplinas(d);
+        final ArrayList<Disciplina> disciplinasAtuais = Parsers.mainPageDisciplinas(d);
 
         final String nome = d.body().getElementsByClass("nome").get(0).text();
         final String campus = d.body().getElementsByClass("unidade").get(0).text();
@@ -56,9 +60,9 @@ public class Parsers {
         final String urlAvatar = ((!url_base.startsWith("http://") && !url_base.startsWith("https://")) ? "http://" : "") + url_base + d.body().getElementsByClass("foto").get(0).child(0).attr("src");
 
         final String j_id_jsp_meusDados = d.body().getElementsByAttributeValueContaining("id", "meusDadosPessoais").get(0).attr("id").split(":")[0];
-        final BotaoDocumento meusDados = new BotaoDocumento(idBotaoDocumento.MEUS_DADOS, new String[][]{{j_id_jsp_meusDados, j_id_jsp_meusDados}, {j_id_jsp_meusDados + ":meusDadosPessoais", j_id_jsp_meusDados + ":meusDadosPessoais"}});
+        final BotaoDocumento meusDados = new BotaoDocumento(idBotaoDocumento.MAIN_MEUS_DADOS, new String[][]{{j_id_jsp_meusDados, j_id_jsp_meusDados}, {j_id_jsp_meusDados + ":meusDadosPessoais", j_id_jsp_meusDados + ":meusDadosPessoais"}});
 
-        Usuario u = new Usuario(nome, campus, matricula, disciplinas, urlAvatar);
+        Usuario u = new Usuario(nome, campus, matricula, disciplinasAtuais, urlAvatar);
         u.adicionarBotao(meusDados);
         return u;
     }
@@ -75,7 +79,7 @@ public class Parsers {
             //Percorrer todos os botoes encontrados na pagina da disciplina
             switch (l.get(i).text()) {
                 //TODO: Parsar outros valores aqui (participantes, foruns, noticias, frequencia, avaliaccoes, tarefas, questionarios)
-                //TODO 2: da pra  fazer em uma so funcao pra todos e so conferir o nome
+                //TODO 2: da pra  fazer em uma so funcao pra todos e so conferir o nome. Arrumar isso
                 case "Ver Notas":
                     String[] v = {"", ""};
                     for (String a : l.get(i).parent().outerHtml().split("'")) {
@@ -85,7 +89,7 @@ public class Parsers {
                         }
                     }
                     String[][] vl = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, v};
-                    botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.VER_NOTAS, vl));
+                    botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_VER_NOTAS, vl));
                     break;
 
                 case "Tarefas":
@@ -97,7 +101,20 @@ public class Parsers {
                         }
                     }
                     String[][] tl = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, t};
-                    botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.VER_TAREFAS, tl));
+                    botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_VER_TAREFAS, tl));
+                    break;
+
+                case "Participantes":
+                    String[] p = {"", ""};
+                    for (String a : l.get(i).parent().outerHtml().split("'")) {
+                        if (a.startsWith("formMenu:j_id_jsp_")) {
+                            if (p[0] == "") p[0] = a;
+                            else p[1] = a;
+                        }
+                    }
+                    String[][] pl = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, p};
+                    botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_PARTICIPANTES, pl));
+                    System.out.println(Sessao.logMSG + pl[0][0] + " " + pl[0][1] + " // " + pl[1][0] + " " + pl[1][1]);
                     break;
             }
         }
@@ -217,7 +234,7 @@ public class Parsers {
     }
 
     //Pagina tarefas
-    static protected ArrayList<Tarefa> paginaTarefasDisciplinaTarefas(Document d, String url_base) {
+    static protected ArrayList<Tarefa> paginaTarefasDisciplinaTarefas(Document d, String url_base, Disciplina disc) {
         ArrayList<Tarefa> tarefas = new ArrayList<Tarefa>();
 
         if(d.getElementsByClass("listing").size() == 0) return tarefas; //Sem tabela -> sem tarefas/página errada
@@ -285,7 +302,7 @@ public class Parsers {
                         }
                     }
 
-                    t = new Tarefa(titulo, descricao, inicio, fim, envios, enviavel, enviada, corrigida);
+                    t = new Tarefa(disc, titulo, descricao, inicio, fim, envios, enviavel, enviada, corrigida);
                     if(url_arquivo != "") t.definirUrlArquivo(url_arquivo);
                     if(enviavel || enviada) t.definirIds(id, j_id);
                     if(enviavel) t.definirIdEnvio(j_idEnviar);

@@ -5,15 +5,15 @@ import java.util.ArrayList;
 public class Usuario {//TODO: AVATAR, arrumar o construtor. substituir [] por list
     private String nome, campus, email, urlAvatar;
     private int matricula;
-    private ArrayList<Disciplina> disciplinas;
+    private ArrayList<Disciplina> disciplinasAtuais;
     private ArrayList<BotaoDocumento> botoes = new ArrayList<>();
 
     //Usuario do login
-    Usuario(String nome, String campus, int matricula, ArrayList<Disciplina> disciplinas, String urlAvatar) {
+    Usuario(String nome, String campus, int matricula, ArrayList<Disciplina> disciplinasAtuais, String urlAvatar) {
         this.nome = nome;
         this.campus = campus;
         this.matricula = matricula;
-        this.disciplinas = disciplinas;
+        this.disciplinasAtuais = disciplinasAtuais;
         this.urlAvatar = urlAvatar;
     }
 
@@ -44,8 +44,8 @@ public class Usuario {//TODO: AVATAR, arrumar o construtor. substituir [] por li
     public String campus() {return this.campus;}
     //public String email() {return this.email;}
 
-    public ArrayList<Disciplina> disciplinas() {
-        return this.disciplinas;
+    public ArrayList<Disciplina> disciplinasAtuais() {
+        return this.disciplinasAtuais;
     }
 
     ArrayList<BotaoDocumento> botoes() {

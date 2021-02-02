@@ -1,9 +1,10 @@
 package com.stacked.sigaa_ifc;
 
 enum idBotaoDocumento {
-    MEUS_DADOS,
-    VER_NOTAS,
-    VER_TAREFAS;
+    MAIN_MEUS_DADOS,
+    DISC_PARTICIPANTES,
+    DISC_VER_NOTAS,
+    DISC_VER_TAREFAS;
 }
 
 public class BotaoDocumento {

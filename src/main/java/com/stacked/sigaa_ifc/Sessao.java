@@ -331,9 +331,9 @@ public class Sessao {
     /*
     Retorna o usuario com os dados salvos através dessa sessão
      */
-    public Usuario usuarioSalvo() {
+    /*public Usuario usuarioSalvo() {
         return this.usuarioSalvo;
-    }
+    }*/
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -390,7 +390,7 @@ public class Sessao {
                 Document doc_p = Jsoup.parse(P.body().string());
 
                 //Body pra pedir as notas
-                BotaoDocumento VER_NOTAS = botao(idBotaoDocumento.VER_NOTAS, doc_p);
+                BotaoDocumento VER_NOTAS = botao(idBotaoDocumento.DISC_VER_NOTAS, doc_p);
                 if(VER_NOTAS == null) {
                     //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
                     return new ArrayList<Nota>();
@@ -430,7 +430,7 @@ public class Sessao {
                 Document doc_p = Jsoup.parse(P.body().string());
 
                 //Body pra pedir as tarefas
-                BotaoDocumento VER_TAREFAS = botao(idBotaoDocumento.VER_TAREFAS, doc_p);
+                BotaoDocumento VER_TAREFAS = botao(idBotaoDocumento.DISC_VER_TAREFAS, doc_p);
                 if(VER_TAREFAS == null) {
                     //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
                     return new ArrayList<Tarefa>();
@@ -446,7 +446,7 @@ public class Sessao {
                 Response N = post("/sigaa/ava/index.jsf", body_notas);
                 if(respostaValida(N)) {
                     Document doc_tarefas = Jsoup.parse(N.body().string());
-                    return Parsers.paginaTarefasDisciplinaTarefas(doc_tarefas, url_base);
+                    return Parsers.paginaTarefasDisciplinaTarefas(doc_tarefas, url_base, d);
                 } else {
                     System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página de notas");
                     return null;
