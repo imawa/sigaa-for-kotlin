@@ -2,19 +2,39 @@ package com.stacked.sigaa_ifc;
 
 import java.util.ArrayList;
 
-public class Usuario {//TODO: AVATAR, arrumar o construtor. substituir [] por list
-    private String nome, campus, email, urlAvatar;
-    private int matricula;
-    private ArrayList<Disciplina> disciplinasAtuais;
+enum tipoUsuario {
+    DISCENTE,
+    DOCENTE;
+}
+
+public class Usuario {
+    private String nome, campus = "", email = "", urlAvatar, login;
+    private int matricula = 0;
+    private ArrayList<Disciplina> disciplinasAtuais = new ArrayList<>();
     private ArrayList<BotaoDocumento> botoes = new ArrayList<>();
+    private tipoUsuario tipo;
 
     //Usuario do login
-    Usuario(String nome, String campus, int matricula, ArrayList<Disciplina> disciplinasAtuais, String urlAvatar) {
+    Usuario(tipoUsuario tipo, String nome, String login, String campus, int matricula, ArrayList<Disciplina> disciplinasAtuais, String urlAvatar) {
+        this.tipo = tipo;
         this.nome = nome;
+        this.login = login;
         this.campus = campus;
         this.matricula = matricula;
         this.disciplinasAtuais = disciplinasAtuais;
         this.urlAvatar = urlAvatar;
+    }
+
+    //Usuario do participantes
+    Usuario(tipoUsuario tipo, String nome, String login, String urlAvatar, String email) {
+        this.tipo = tipo;
+        this.nome = nome;
+        this.login = login;
+        this.urlAvatar = urlAvatar;
+        this.email = email;
+    }
+    void definirMatricula(Integer matricula) { //Professores não é informado
+        this.matricula = matricula;
     }
 
     //Usuario  > +email, +botoes disciplina
@@ -42,7 +62,10 @@ public class Usuario {//TODO: AVATAR, arrumar o construtor. substituir [] por li
     public String nome() {return this.nome;}
     public String urlAvatar() {return this.urlAvatar;}
     public String campus() {return this.campus;}
-    //public String email() {return this.email;}
+    public boolean discente() {return (tipo == tipoUsuario.DISCENTE);}
+    public boolean docente() {return (tipo == tipoUsuario.DOCENTE);}
+    public String email() {return this.email;}
+    public String usuario() {return this.login;}
 
     public ArrayList<Disciplina> disciplinasAtuais() {
         return this.disciplinasAtuais;

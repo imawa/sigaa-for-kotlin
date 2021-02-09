@@ -51,7 +51,7 @@ public class Parsers {
         return disciplinas;
     }
 
-    static protected Usuario mainPageDadosUsuario(Document d, String url_base) {
+    static protected Usuario mainPageDadosUsuario(Document d, String url_base, String login) {
         final ArrayList<Disciplina> disciplinasAtuais = Parsers.mainPageDisciplinas(d);
 
         final String nome = d.body().getElementsByClass("nome").get(0).text();
@@ -62,7 +62,7 @@ public class Parsers {
         final String j_id_jsp_meusDados = d.body().getElementsByAttributeValueContaining("id", "meusDadosPessoais").get(0).attr("id").split(":")[0];
         final BotaoDocumento meusDados = new BotaoDocumento(idBotaoDocumento.MAIN_MEUS_DADOS, new String[][]{{j_id_jsp_meusDados, j_id_jsp_meusDados}, {j_id_jsp_meusDados + ":meusDadosPessoais", j_id_jsp_meusDados + ":meusDadosPessoais"}});
 
-        Usuario u = new Usuario(nome, campus, matricula, disciplinasAtuais, urlAvatar);
+        Usuario u = new Usuario(tipoUsuario.DISCENTE, nome, login, campus, matricula, disciplinasAtuais, urlAvatar);
         u.adicionarBotao(meusDados);
         return u;
     }
@@ -114,11 +114,67 @@ public class Parsers {
                     }
                     String[][] pl = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, p};
                     botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_PARTICIPANTES, pl));
-                    System.out.println(Sessao.logMSG + pl[0][0] + " " + pl[0][1] + " // " + pl[1][0] + " " + pl[1][1]);
+                    //System.out.println(Sessao.logMSG + pl[0][0] + " " + pl[0][1] + " // " + pl[1][0] + " " + pl[1][1]);
                     break;
             }
         }
         return botoesDisciplina;
+    }
+
+    //Participantes
+    static protected ArrayList<Usuario> paginaDisciplinaParticipantes(Document d, String url_base) {
+        ArrayList<Usuario> usuarios = new ArrayList<>();
+        //fieldset em cima indicando docente ou discente (0 docente) (1 ddisente)
+        //document.getElementsByClassName("participantes")
+        /*
+        dentro do primeiro do participantes ta os usuarios
+
+        tem um tr por linha
+
+      valign=top > dados usuario
+      em cima do valign top = imagem do usuario
+         */
+        Elements listaParticipantes = d.getElementsByClass("participantes");
+
+        for(int listaP = 0; listaP < listaParticipantes.size(); listaP++) {
+            tipoUsuario tipo = (listaParticipantes.get(listaP).previousElementSibling().child(0).text().contains("Docente")) ? tipoUsuario.DOCENTE : tipoUsuario.DISCENTE;
+
+            Element listaUsuarios = listaParticipantes.get(listaP).getElementsByTag("tbody").get(0);
+            //Linhas (1-2 usuarios)
+            for(Element linha : listaUsuarios.getElementsByTag("tr")) {
+                //System.out.println(Sessao.logMSG + linha);
+                //System.out.println(Sessao.logMSG + listaUsuarios.getElementsByTag("tr").size());
+
+                for(Element elementosUsuariosLinha : linha.getAllElements()) {
+                    //valign="top" -> elemento com informações do usuário
+                    //em cima do valign="top" -> avatar
+                    //em baixo do valign="top" -> botão de mensagem
+                    if(elementosUsuariosLinha.attr("valign").equals("top")) {
+                        Element eAvatar = elementosUsuariosLinha.previousElementSibling();
+                        Element eInformacoes = elementosUsuariosLinha;
+
+                        String url_avatar = ((!url_base.startsWith("http://") && !url_base.startsWith("https://")) ? "http://" : "") + url_base + eAvatar.getElementsByTag("img").get(0).attr("src");
+                        String nome = eInformacoes.getElementsByTag("strong").text();
+                        String usuario = "", email = "";
+                        Integer matricula = 0;
+                        for(Element e : eInformacoes.getElementsByTag("em")) {
+                            if(e.previousSibling().outerHtml().contains("Usuário")) {
+                                usuario = e.text();
+                            } else if(e.previousSibling().outerHtml().toLowerCase().contains("e-mail")) { //Docente é E-[M]ail, o de discente é E-[m]ail. SIGAA, oi????
+                                email = e.text();
+                            } else if(e.previousSibling().outerHtml().contains("Matrícula")) {
+                                matricula = Integer.parseInt(e.text());
+                            }
+                        }
+                        //System.out.println(Sessao.logMSG + tipo +" " + nome + " " + usuario + " " + email + " " + matricula);
+                        Usuario _u = new Usuario(tipo, nome, usuario, url_avatar, email);
+                        if(matricula != 0) _u.definirMatricula(matricula); //Só discentes possuem matrícula aqui
+                        usuarios.add(_u);
+                    }
+                }
+            }
+        }
+        return usuarios;
     }
 
     //Pagina notas

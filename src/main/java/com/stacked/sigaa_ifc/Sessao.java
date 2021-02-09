@@ -125,7 +125,7 @@ public class Sessao {
             Response r = get("/sigaa/verTelaLogin.do");
             if(respostaValida(r)) {
                 JSESSIONID = r.header("Set-Cookie").replace("(", "").replace(")", "").split(";")[0].split("JSESSIONID=")[1];
-                System.out.println(logMSG + "JSESSIONID = " + JSESSIONID);
+                System.out.println(logMSG + "Obtido um JSESSIONID");
             } else {
                 System.out.println(logMSG + "novoJSESSIONID() Resposta falhou");
                 return false;
@@ -183,7 +183,7 @@ public class Sessao {
 
                         //Dados
                         Document d = Jsoup.parse(R.body().string());
-                        usuarioSalvo = Parsers.mainPageDadosUsuario(d, url_base);
+                        usuarioSalvo = Parsers.mainPageDadosUsuario(d, url_base, usuario);
                         return usuarioSalvo;
 
                     } else if(urlRedirecionado.contains(url_base + "/sigaa/telaAvisoLogon.jsf")) {
@@ -202,7 +202,7 @@ public class Sessao {
                                 } else {
                                     //Redirecionado para a página principal
                                     Document f = Jsoup.parse(A.body().string());
-                                    usuarioSalvo = Parsers.mainPageDadosUsuario(f, url_base);
+                                    usuarioSalvo = Parsers.mainPageDadosUsuario(f, url_base, usuario);
                                     return usuarioSalvo;
                                 }
                             }
@@ -226,7 +226,7 @@ public class Sessao {
 
                                     //Dados
                                     Document d = Jsoup.parse(R.body().string());
-                                    usuarioSalvo = Parsers.mainPageDadosUsuario(d, url_base);
+                                    usuarioSalvo = Parsers.mainPageDadosUsuario(d, url_base, usuario);
                                     return usuarioSalvo;
                                 } else return null;
                             }
@@ -449,6 +449,45 @@ public class Sessao {
                     return Parsers.paginaTarefasDisciplinaTarefas(doc_tarefas, url_base, d);
                 } else {
                     System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página de notas");
+                    return null;
+                }
+            } else {
+                System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página principal da disciplina");
+                return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public ArrayList<Usuario> disciplinaPegarParticipantes(Disciplina d) {
+        try {
+            Response P = disciplinaPaginaDisciplina(d);
+            if(respostaValida(P)) {
+                Document doc_p = Jsoup.parse(P.body().string());
+
+                //Body pra pedir as tarefas
+                BotaoDocumento VER_PARTICIPANTES = botao(idBotaoDocumento.DISC_PARTICIPANTES, doc_p);
+                if(VER_PARTICIPANTES == null) {
+                    //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
+                    return new ArrayList<Usuario>();
+                }
+
+                FormBody body_participantes = new FormBody.Builder()
+                        .add("formMenu", "formMenu")
+                        .add(VER_PARTICIPANTES.j_id_jsp()[0][0], VER_PARTICIPANTES.j_id_jsp()[0][1])
+                        .add("javax.faces.ViewState", javaxViewState(doc_p))
+                        .add(VER_PARTICIPANTES.j_id_jsp()[1][0], VER_PARTICIPANTES.j_id_jsp()[1][1])
+                        .build();
+
+                Response N = post("/sigaa/ava/index.jsf", body_participantes);
+                if(respostaValida(N)) {
+                    Document doc_participantes = Jsoup.parse(N.body().string());
+                    System.out.println(doc_participantes.wholeText());
+                    return Parsers.paginaDisciplinaParticipantes(doc_participantes, url_base);
+                } else {
+                    System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página de participantes");
                     return null;
                 }
             } else {
