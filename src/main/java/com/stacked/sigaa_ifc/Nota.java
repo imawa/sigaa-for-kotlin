@@ -6,8 +6,10 @@ public class Nota {
          */
     private String periodo, abrev, descricao;
     private float nota, notaMax, peso;
+    private Disciplina disciplina;
 
-    Nota(String abrev, String periodo, float nota, float notaMax, float peso, String descricao) {
+    Nota(Disciplina disciplina, String abrev, String periodo, float nota, float notaMax, float peso, String descricao) {
+        this.disciplina = disciplina;
         this.abrev = abrev;
         this.periodo = periodo;
         this.nota = nota;
@@ -20,6 +22,9 @@ public class Nota {
         return nota;
     }
     public float notaMax() { return notaMax; }
+    public Disciplina disciplina() {
+        return disciplina;
+    }
     public String abrev() { return abrev; }
     public String periodo() {
         return periodo;

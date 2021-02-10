@@ -116,6 +116,18 @@ public class Parsers {
                     botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_PARTICIPANTES, pl));
                     //System.out.println(Sessao.logMSG + pl[0][0] + " " + pl[0][1] + " // " + pl[1][0] + " " + pl[1][1]);
                     break;
+
+                case "Avaliações":
+                    String[] av = {"", ""};
+                    for (String a : l.get(i).parent().outerHtml().split("'")) {
+                        if (a.startsWith("formMenu:j_id_jsp_")) {
+                            if (av[0] == "") av[0] = a;
+                            else av[1] = a;
+                        }
+                    }
+                    String[][] avl = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, av};
+                    botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_VER_AVALIACOES, avl));
+                    break;
             }
         }
         return botoesDisciplina;
@@ -179,7 +191,7 @@ public class Parsers {
 
     //Pagina notas
     //todo: arrumar isso aqui e pegar pela linha e nao classe linha par ou impar
-    static protected ArrayList<Nota> paginaNotasDisciplinaNotas(Document d) {
+    static protected ArrayList<Nota> paginaNotasDisciplinaNotas(Document d, Disciplina disc) {
         ArrayList<Nota> notas = new ArrayList<Nota>();
 
         if(d.body().getElementById("trAval") == null || (d.body().getElementsByClass("linhaPar").size() == 0 && d.body().getElementsByClass("linhaImpar").size() == 0)) return notas; //Notas vazias (provavelmente nem foi pra página certa)
@@ -255,7 +267,7 @@ public class Parsers {
                     }
                 }
                 System.out.println("12");
-                notas.add(new Nota(abrev, periodo, nota, notaMax, peso, descricao));
+                notas.add(new Nota(disc, abrev, periodo, nota, notaMax, peso, descricao));
                 System.out.println("13");
                 index_nota++;
             } else if(e.id().contains("unid")) {
@@ -281,7 +293,7 @@ public class Parsers {
 
                 //System.out.println(periodo + " " + nota + " " + descricao);
                 System.out.println("16");
-                notas.add(new Nota("Nota", periodo, nota, 10, 1, "Nota " + periodo)); //Me pergunto se 10 sempre é o maximo aqui....
+                notas.add(new Nota(disc, "Nota", periodo, nota, 10, 1, "Nota " + periodo)); //Me pergunto se 10 sempre é o maximo aqui....
                 index_nota++;
                 index_periodo++;
             }
@@ -289,6 +301,48 @@ public class Parsers {
         return notas;
     }
 
+    static protected ArrayList<Avaliacao> paginaDisciplinaAvaliacoes(Document d, Disciplina disc) {
+        //td
+        //0=dia
+        //1=hora
+        //2=descricao
+        ArrayList<Avaliacao> avaliacoes = new ArrayList<>();
+
+        Element itensTabela = null;
+        if(d.getElementsByClass("listing").size() > 0 && d.getElementsByClass("listing").first().getElementsByTag("tbody").size() > 0) {
+            itensTabela = d.getElementsByClass("listing").first().getElementsByTag("tbody").first();
+        } else return new ArrayList<>();
+
+        for(Element avaliacao : itensTabela.getElementsByTag("tr")) {
+            String descricao = "";
+            String dia = "", hora = "";
+            for(Element dado : avaliacao.getElementsByTag("td")) {
+                switch(dado.elementSiblingIndex()) {
+                    case 0:
+                        dia = dado.text();
+                        break;
+
+                    case 1:
+                        hora = dado.text().toLowerCase().replace("h", ":");
+                        if(hora.toLowerCase().charAt(hora.length() - 1) == ':') {hora += "00";}
+                        break;
+
+                    case 2:
+                        descricao = dado.text();
+                        break;
+                }
+            }
+
+            Date data = new Date();
+            try {
+                data = Avaliacao.formato_data.parse(dia + " " + hora);
+            } catch (ParseException e) {e.printStackTrace();}
+            Avaliacao _a = new Avaliacao(disc, data, descricao);
+            avaliacoes.add(_a);
+        }
+        //document.getElementsByClassName("listing")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr")[0].getElementsByTagName("td")
+        return avaliacoes;
+    }
     //Pagina tarefas
     static protected ArrayList<Tarefa> paginaTarefasDisciplinaTarefas(Document d, String url_base, Disciplina disc) {
         ArrayList<Tarefa> tarefas = new ArrayList<Tarefa>();

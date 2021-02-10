@@ -70,6 +70,12 @@ public class Usuario {
     public ArrayList<Disciplina> disciplinasAtuais() {
         return this.disciplinasAtuais;
     }
+    public Disciplina disciplina(String nome) {
+        for(Disciplina d : disciplinasAtuais) {
+            if(d.nome().equals(nome)) return d;
+        }
+        return null;
+    }
 
     ArrayList<BotaoDocumento> botoes() {
         return this.botoes;

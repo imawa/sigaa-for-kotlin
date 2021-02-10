@@ -4,6 +4,7 @@ enum idBotaoDocumento {
     MAIN_MEUS_DADOS,
     DISC_PARTICIPANTES,
     DISC_VER_NOTAS,
+    DISC_VER_AVALIACOES,
     DISC_VER_TAREFAS;
 }
 

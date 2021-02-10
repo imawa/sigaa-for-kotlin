@@ -345,6 +345,7 @@ public class Sessao {
     A diferença entre esse e o disciplinaFetchPaginaPrincipal(disciplina) é que o segundo parsa a página principal em itens, enquanto esse apenas solicita ela para que comandos como o disciplinaFetchNotas(disciplina) possam funcionar
      */
     private Response disciplinaPaginaDisciplina(Disciplina d) {
+        if(d == null) return null;
         try {
             final Response G = get("/sigaa/portais/discente/discente.jsf");
             if(respostaValida(G)) {
@@ -383,7 +384,9 @@ public class Sessao {
     Pega a página de notas de uma disciplina, parsa as notas, salva no objeto da disciplina e as retorna.
      */
     //TODO: Terminar esse. parser
+    //TODO 2: Dá pra juntar muita coisa dessas funções aqui abaixo, pois são bem iguais
     public ArrayList<Nota> disciplinaPegarNotas(Disciplina d) {
+        if(d == null) return new ArrayList<>();
         try {
             Response P = disciplinaPaginaDisciplina(d);
             if(respostaValida(P)) {
@@ -407,7 +410,7 @@ public class Sessao {
                 if(respostaValida(N)) {
                     Document doc_notas = Jsoup.parse(N.body().string());
                     //System.out.println(doc_notas.wholeText());//////
-                    return Parsers.paginaNotasDisciplinaNotas(doc_notas);
+                    return Parsers.paginaNotasDisciplinaNotas(doc_notas, d);
                 } else {
                     System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página de notas");
                     return null;
@@ -424,6 +427,7 @@ public class Sessao {
     }
 
     public ArrayList<Tarefa> disciplinaPegarTarefas(Disciplina d) {
+        if(d == null) return new ArrayList<>();
         try {
             Response P = disciplinaPaginaDisciplina(d);
             if(respostaValida(P)) {
@@ -462,6 +466,7 @@ public class Sessao {
     }
 
     public ArrayList<Usuario> disciplinaPegarParticipantes(Disciplina d) {
+        if(d == null) return new ArrayList<>();
         try {
             Response P = disciplinaPaginaDisciplina(d);
             if(respostaValida(P)) {
@@ -484,10 +489,50 @@ public class Sessao {
                 Response N = post("/sigaa/ava/index.jsf", body_participantes);
                 if(respostaValida(N)) {
                     Document doc_participantes = Jsoup.parse(N.body().string());
-                    System.out.println(doc_participantes.wholeText());
+                    //System.out.println(doc_participantes.wholeText());
                     return Parsers.paginaDisciplinaParticipantes(doc_participantes, url_base);
                 } else {
                     System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página de participantes");
+                    return null;
+                }
+            } else {
+                System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página principal da disciplina");
+                return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public ArrayList<Avaliacao> disciplinaPegarAvaliacoes(Disciplina d) {
+        if(d == null) return new ArrayList<>();
+        try {
+            Response P = disciplinaPaginaDisciplina(d);
+            if(respostaValida(P)) {
+                Document doc_p = Jsoup.parse(P.body().string());
+
+                //Body pra pedir as avaliacoes
+                BotaoDocumento VER_AVALIACOES = botao(idBotaoDocumento.DISC_VER_AVALIACOES, doc_p);
+                if(VER_AVALIACOES == null) {
+                    //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
+                    return new ArrayList<Avaliacao>();
+                }
+
+                FormBody body_avaliacoes = new FormBody.Builder()
+                        .add("formMenu", "formMenu")
+                        .add(VER_AVALIACOES.j_id_jsp()[0][0], VER_AVALIACOES.j_id_jsp()[0][1])
+                        .add("javax.faces.ViewState", javaxViewState(doc_p))
+                        .add(VER_AVALIACOES.j_id_jsp()[1][0], VER_AVALIACOES.j_id_jsp()[1][1])
+                        .build();
+
+                Response N = post("/sigaa/ava/index.jsf", body_avaliacoes);
+                if(respostaValida(N)) {
+                    Document doc_avaliacoes = Jsoup.parse(N.body().string());
+                    //System.out.println(doc_avaliacoes.wholeText());
+                    return Parsers.paginaDisciplinaAvaliacoes(doc_avaliacoes, d);
+                } else {
+                    System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página de avaliações");
                     return null;
                 }
             } else {
