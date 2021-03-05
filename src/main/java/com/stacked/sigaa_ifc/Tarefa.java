@@ -52,6 +52,7 @@ public class Tarefa {
     void definirUrlArquivo(String dir) { urlDownload = dir; }
 
     private String id, j_id, j_idEnviar, j_idVisualizar;
+    String getId() { return id; }
     String[] postArgsEnviar() { return new String[]{j_id, (j_id + ":" + j_idEnviar), id}; }
     String[] postArgsVisualizar() { return new String[]{j_id, (j_id + ":" + j_idVisualizar), id}; }
 }

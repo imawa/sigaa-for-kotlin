@@ -1,12 +1,18 @@
 package com.stacked.sigaa_ifc;
 
+import android.net.Uri;
+
 import okhttp3.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import okhttp3.FormBody;
 
@@ -47,7 +53,8 @@ public class Sessao {
     Usado pra dar os requests de GET.
     */
     private Response get(String caminho) throws IOException {
-        if(JSESSIONID != null && dataLogin != 0 && sessionTimeout()) throw new IOException(JSESSIONID + " Session Timeout");
+        if (JSESSIONID != null && dataLogin != 0 && sessionTimeout())
+            throw new IOException(JSESSIONID + " Session Timeout");
         Request request = new Request.Builder()
                 .url("https://" + url_base + caminho)
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -62,7 +69,8 @@ public class Sessao {
     Usado pra dar os requests de POST.
      */
     private Response post(String caminho, FormBody body) throws IOException {
-        if(JSESSIONID != null && dataLogin != 0 && sessionTimeout()) throw new IOException(JSESSIONID + " Session Timeout");
+        if (JSESSIONID != null && dataLogin != 0 && sessionTimeout())
+            throw new IOException(JSESSIONID + " Session Timeout");
         Request request = new Request.Builder()
                 .url("https://" + url_base + caminho)
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -79,8 +87,10 @@ public class Sessao {
     Confere se a resposta eh valida e se o SIGAA nao esta em manutencao
      */
     private boolean respostaValida(Response r) {
-        if(r.isSuccessful()) {
-            if(r.priorResponse() != null && r.priorResponse().isRedirect()) return !(r.priorResponse().headers().get("Location").contains("manutencao.html")); else return true;
+        if (r != null && r.isSuccessful()) {
+            if (r.priorResponse() != null && r.priorResponse().isRedirect())
+                return !(r.priorResponse().headers().get("Location").contains("manutencao.html"));
+            else return true;
         } else return false;
     }
 
@@ -108,8 +118,8 @@ public class Sessao {
     Retorna true se expirou, false se não.
      */
     public boolean sessionTimeout() {
-        long t = 55*60*1000; //55 minutos para margem de erro
-        return (System.currentTimeMillis()-dataLogin > t);
+        long t = 55 * 60 * 1000; //55 minutos para margem de erro
+        return (System.currentTimeMillis() - dataLogin > t);
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -123,7 +133,7 @@ public class Sessao {
         JSESSIONID = null;
         try {
             Response r = get("/sigaa/verTelaLogin.do");
-            if(respostaValida(r)) {
+            if (respostaValida(r)) {
                 JSESSIONID = r.header("Set-Cookie").replace("(", "").replace(")", "").split(";")[0].split("JSESSIONID=")[1];
                 System.out.println(logMSG + "Obtido um JSESSIONID");
             } else {
@@ -145,7 +155,7 @@ public class Sessao {
     //TODO Tenho que limpar esse código. Principalmente pular mais de 1 aviso
     public Usuario login(final String usuario, final String senha) {
         //JSESSIONID
-        if(!novoJSESSIONID()) return null;
+        if (!novoJSESSIONID()) return null;
 
         //Logar JSESSIONID
         //Body para logar
@@ -160,11 +170,10 @@ public class Sessao {
                 .build();
 
         System.out.println(logMSG + "login() Enviando POST login");
-        try
-        {
+        try {
             Response R = post("/sigaa/logar.do", body_login);
-            if(respostaValida(R)) {
-                if(R.priorResponse() == null) {
+            if (respostaValida(R)) {
+                if (R.priorResponse() == null) {
                     //Nao redirecionado, nao logou.
                     System.out.println(logMSG + "logar() sem resposta. Usuário ou senha incorretos");
                     return null;
@@ -173,7 +182,8 @@ public class Sessao {
                     String[] urlsLogado = {url_base + "/sigaa/verPortalDiscente.do", url_base + "/sigaa/portais/discente/discente.jsf"};
 
                     String urlRedirecionado = R.priorResponse().headers().get("Location").replace("https://", "").replace("http://", "");
-                    if((urlRedirecionado.substring(urlRedirecionado.length() - 1)) == "/") urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
+                    if ((urlRedirecionado.substring(urlRedirecionado.length() - 1)) == "/")
+                        urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
 
                     if (Arrays.asList(urlsLogado).contains(urlRedirecionado)) {
 
@@ -186,7 +196,7 @@ public class Sessao {
                         usuarioSalvo = Parsers.mainPageDadosUsuario(d, url_base, usuario);
                         return usuarioSalvo;
 
-                    } else if(urlRedirecionado.contains(url_base + "/sigaa/telaAvisoLogon.jsf")) {
+                    } else if (urlRedirecionado.contains(url_base + "/sigaa/telaAvisoLogon.jsf")) {
 
                         //Redirecionado para algum aviso
                         System.out.println(Sessao.logMSG + "Redirecionado para um aviso");
@@ -345,10 +355,10 @@ public class Sessao {
     A diferença entre esse e o disciplinaFetchPaginaPrincipal(disciplina) é que o segundo parsa a página principal em itens, enquanto esse apenas solicita ela para que comandos como o disciplinaFetchNotas(disciplina) possam funcionar
      */
     private Response disciplinaPaginaDisciplina(Disciplina d) {
-        if(d == null) return null;
+        if (d == null) return null;
         try {
             final Response G = get("/sigaa/portais/discente/discente.jsf");
-            if(respostaValida(G)) {
+            if (respostaValida(G)) {
                 Document D = Jsoup.parse(G.body().string());
                 FormBody body_disciplina = new FormBody.Builder()
                         .add(d.postArgs()[0], d.postArgs()[0])
@@ -368,12 +378,37 @@ public class Sessao {
         }
     }
 
+    private Response disciplinaAbrirEnvioTarefa(Tarefa tarefa) {
+        if (tarefa == null || !tarefa.enviavel()) return null;
+        try {
+            final Response G = get("/sigaa/portais/discente/discente.jsf");
+            if (respostaValida(G)) {
+                Document D = Jsoup.parse(G.body().string());
+                FormBody body_tarefa = new FormBody.Builder()
+                        .add("formAtividades", "formAtividades")
+                        .add("javax.faces.ViewState", javaxViewState(D))
+                        .add("formAtividades:visualizarTarefaTurmaVirtual", "formAtividades:visualizarTarefaTurmaVirtual")
+                        .add("id", tarefa.getId())
+                        .add("idTurma", tarefa.disciplina().id()) //TODO: arrumar pras que nao tem id
+                        .build();
+
+                return post("/sigaa/portais/discente/discente.jsf#", body_tarefa);
+            } else {
+                return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println(logMSG + "disciplinaAbrirEnvioTarefa() nao teve sucesso");
+            return null;
+        }
+    }
+
     //Usado para pegar algum dos botoes no usuario salvo. Se nao encontrar nele, procura na pagina
-    BotaoDocumento botao (idBotaoDocumento id, Document d) {
-        if(usuarioSalvo.botao(id) != null) return usuarioSalvo.botao(id);
+    BotaoDocumento botao(idBotaoDocumento id, Document d) {
+        if (usuarioSalvo.botao(id) != null) return usuarioSalvo.botao(id);
 
         ArrayList<BotaoDocumento> botoes = Parsers.paginaDisciplinaBotoes(d);
-        for(BotaoDocumento b : botoes) {
+        for (BotaoDocumento b : botoes) {
             usuarioSalvo.adicionarBotao(b);
         }
         return usuarioSalvo.botao(id);
@@ -386,15 +421,15 @@ public class Sessao {
     //TODO: Terminar esse. parser
     //TODO 2: Dá pra juntar muita coisa dessas funções aqui abaixo, pois são bem iguais
     public ArrayList<Nota> disciplinaPegarNotas(Disciplina d) {
-        if(d == null) return new ArrayList<>();
+        if (d == null) return new ArrayList<>();
         try {
             Response P = disciplinaPaginaDisciplina(d);
-            if(respostaValida(P)) {
+            if (respostaValida(P)) {
                 Document doc_p = Jsoup.parse(P.body().string());
 
                 //Body pra pedir as notas
                 BotaoDocumento VER_NOTAS = botao(idBotaoDocumento.DISC_VER_NOTAS, doc_p);
-                if(VER_NOTAS == null) {
+                if (VER_NOTAS == null) {
                     //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
                     return new ArrayList<Nota>();
                 }
@@ -407,7 +442,7 @@ public class Sessao {
                         .build();
 
                 Response N = post("/sigaa/ava/index.jsf", body_notas);
-                if(respostaValida(N)) {
+                if (respostaValida(N)) {
                     Document doc_notas = Jsoup.parse(N.body().string());
                     //System.out.println(doc_notas.wholeText());//////
                     return Parsers.paginaNotasDisciplinaNotas(doc_notas, d);
@@ -427,15 +462,15 @@ public class Sessao {
     }
 
     public ArrayList<Tarefa> disciplinaPegarTarefas(Disciplina d) {
-        if(d == null) return new ArrayList<>();
+        if (d == null) return new ArrayList<>();
         try {
             Response P = disciplinaPaginaDisciplina(d);
-            if(respostaValida(P)) {
+            if (respostaValida(P)) {
                 Document doc_p = Jsoup.parse(P.body().string());
 
                 //Body pra pedir as tarefas
                 BotaoDocumento VER_TAREFAS = botao(idBotaoDocumento.DISC_VER_TAREFAS, doc_p);
-                if(VER_TAREFAS == null) {
+                if (VER_TAREFAS == null) {
                     //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
                     return new ArrayList<Tarefa>();
                 }
@@ -448,7 +483,7 @@ public class Sessao {
                         .build();
 
                 Response N = post("/sigaa/ava/index.jsf", body_notas);
-                if(respostaValida(N)) {
+                if (respostaValida(N)) {
                     Document doc_tarefas = Jsoup.parse(N.body().string());
                     return Parsers.paginaTarefasDisciplinaTarefas(doc_tarefas, url_base, d);
                 } else {
@@ -466,15 +501,15 @@ public class Sessao {
     }
 
     public ArrayList<Usuario> disciplinaPegarParticipantes(Disciplina d) {
-        if(d == null) return new ArrayList<>();
+        if (d == null) return new ArrayList<>();
         try {
             Response P = disciplinaPaginaDisciplina(d);
-            if(respostaValida(P)) {
+            if (respostaValida(P)) {
                 Document doc_p = Jsoup.parse(P.body().string());
 
                 //Body pra pedir as tarefas
                 BotaoDocumento VER_PARTICIPANTES = botao(idBotaoDocumento.DISC_PARTICIPANTES, doc_p);
-                if(VER_PARTICIPANTES == null) {
+                if (VER_PARTICIPANTES == null) {
                     //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
                     return new ArrayList<Usuario>();
                 }
@@ -487,7 +522,7 @@ public class Sessao {
                         .build();
 
                 Response N = post("/sigaa/ava/index.jsf", body_participantes);
-                if(respostaValida(N)) {
+                if (respostaValida(N)) {
                     Document doc_participantes = Jsoup.parse(N.body().string());
                     //System.out.println(doc_participantes.wholeText());
                     return Parsers.paginaDisciplinaParticipantes(doc_participantes, url_base);
@@ -506,15 +541,21 @@ public class Sessao {
     }
 
     public ArrayList<Avaliacao> disciplinaPegarAvaliacoes(Disciplina d) {
-        if(d == null) return new ArrayList<>();
+        if (d == null) return new ArrayList<>();
         try {
             Response P = disciplinaPaginaDisciplina(d);
-            if(respostaValida(P)) {
+            if (respostaValida(P)) {
                 Document doc_p = Jsoup.parse(P.body().string());
+
+                // System.out.println(logMSG + doc_p.getElementById("conteudo").className());
+                //   for(Element e : doc_p.getElementsByClass("titulo")) {
+                //      System.out.println(logMSG + e.text());
+                //   }
+                //   System.out.println(doc_p.wholeText());
 
                 //Body pra pedir as avaliacoes
                 BotaoDocumento VER_AVALIACOES = botao(idBotaoDocumento.DISC_VER_AVALIACOES, doc_p);
-                if(VER_AVALIACOES == null) {
+                if (VER_AVALIACOES == null) {
                     //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
                     return new ArrayList<Avaliacao>();
                 }
@@ -527,7 +568,7 @@ public class Sessao {
                         .build();
 
                 Response N = post("/sigaa/ava/index.jsf", body_avaliacoes);
-                if(respostaValida(N)) {
+                if (respostaValida(N)) {
                     Document doc_avaliacoes = Jsoup.parse(N.body().string());
                     //System.out.println(doc_avaliacoes.wholeText());
                     return Parsers.paginaDisciplinaAvaliacoes(doc_avaliacoes, d);
@@ -543,6 +584,137 @@ public class Sessao {
             e.printStackTrace();
             return null;
         }
+    }
+
+
+    public boolean disciplinaEnviarTarefa(Tarefa tarefa, String comentarios, String nomeArquivo, byte[] arquivo) {
+        if (tarefa == null) return false;
+        try {
+            Response T = disciplinaAbrirEnvioTarefa(tarefa);
+            if (respostaValida(T)) {
+                Document doc_tarefa = Jsoup.parse(T.body().string());
+
+                //Conferir se a tarefa aceita o que foi inserido
+                boolean input_arquivo = false, input_comentarios = false, input_arquivo_obrigatorio = false;
+
+                if(doc_tarefa.getElementsByClass("form").size() > 0 && doc_tarefa.getElementsByClass("form").first().getElementsByTag("label").size() > 0) {
+                    Element eForm = doc_tarefa.getElementsByClass("form").first();
+                    if(eForm.getElementsByAttributeValueContaining("name", "idComentarios").size() == 1) input_arquivo = true;
+                    if(eForm.getElementsByAttributeValueContaining("name", "idArquivo").size() == 1) input_comentarios = true;
+
+                    // Algumas tarefas requerem o campo de arquivo
+                    if(input_arquivo) {
+                        if(eForm.getElementsByAttributeValueContaining("name", "idArquivo").first().parent().getElementsByTag("label").size() > 0) {
+                            input_arquivo_obrigatorio = (eForm.getElementsByAttributeValueContaining("name", "idArquivo").first().parent().getElementsByTag("label").first().getElementsByAttributeValueContaining("class", "required").size() == 1);
+                        }
+                    }
+
+                    //TODO: Conferir campo de resposta e sua obrigatoriedade quando haver algum
+                    //TODO: Conferir se campo de resposta não é obrigatório quando haver algum
+                } else {
+                    System.out.println(logMSG + "disciplinaEnviarTarefa() Página acessada não possui um form");
+                    return false;
+                }
+
+                //Requer arquivo, mas não há arquivo
+                if(input_arquivo_obrigatorio && (arquivo == null || nomeArquivo == null || nomeArquivo == "")) {
+                    System.out.println(logMSG + "disciplinaEnviarTarefa() Tarefa requer um arquivo, mas não foi inserido um arquivo");
+                    return false;
+                }
+                //Não aceita arquivo, mas há algum arquivo
+                if(!input_arquivo && (arquivo != null || nomeArquivo != null)) {
+                    System.out.println(logMSG + "disciplinaEnviarTarefa() Tarefa não aceita arquivo, mas foi inserido um arquivo");
+                    return false;
+                }
+                //Não aceita comentário
+                if(!input_comentarios) {
+                    System.out.println(logMSG + "disciplinaEnviarTarefa() Tarefa não aceita envio de comentários. Eu não sabia que isso era possível...");
+                    return false; //Tarefa não aceita algum dos dois
+                }
+                //TODO: Aceita resposta, sem resposta & Com resposta, não aceita resposta
+
+                //Pegar os inputs do form invisível da pagina
+                String j_id_jsp = "";
+                ArrayList<String> form = new ArrayList<>();
+                for (Element i : doc_tarefa.getElementsByClass("responderTarefa").get(0).getElementsByTag("input")) {
+                    if (i.attr("type").equals("hidden")) {
+                        if(j_id_jsp.equals("")) {
+                            j_id_jsp = i.attr("name").split(":")[0];
+                        }
+
+                        System.out.println(logMSG + "disciplinaEnviarTarefa() " + i.attr("name") + " " + i.attr("value"));
+
+                        form.add(i.attr("name"));
+                        form.add(i.attr("value"));
+                    }
+                }
+
+                // o sig envia um multi part form body no envio de tarefa
+                //TODO: Body que envia campo de resposta
+                //TODO 2: Body pra quando não precisa de arquivo
+                RequestBody body_envioTarefa = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart(j_id_jsp, j_id_jsp)
+                        .addFormDataPart(form.get(0), form.get(1))
+                        .addFormDataPart(form.get(2), form.get(3))
+                        .addFormDataPart(form.get(4), form.get(5))
+                        .addFormDataPart(form.get(6), form.get(7))
+                        .addFormDataPart(form.get(8), form.get(9))
+                        .addFormDataPart(form.get(10), form.get(11))
+                        .addFormDataPart(j_id_jsp + ":idArquivo", nomeArquivo, RequestBody.create(MediaType.parse("application/octet-stream"), arquivo))
+                        .addFormDataPart(j_id_jsp + ":idComentarios", comentarios)
+                        .addFormDataPart(j_id_jsp + ":idEnviar", "Enviar")
+                        .addFormDataPart("javax.faces.ViewState", javaxViewState(doc_tarefa))
+                        .build();
+                //https://sig.ifc.edu.br/sigaa/ava/TarefaTurma/enviarTarefa.jsf
+
+                //POSTAR O BODY
+                if (JSESSIONID != null && dataLogin != 0 && sessionTimeout())
+                    throw new IOException(JSESSIONID + " Session Timeout");
+                Request request = new Request.Builder()
+                        .url("https://" + url_base + "/sigaa/ava/TarefaTurma/enviarTarefa.jsf")
+                        .header("Content-Type", "multipart/form-data")
+                        .header("Cookie", "JSESSIONID=" + JSESSIONID)
+                        .post(body_envioTarefa)
+                        .build();
+
+                //TODO: preciso .addInterceptor() pra retentar as que falham, tipo disciplina e conexao lenta
+                Response N = client.newCall(request).execute();
+                //System.out.println(logMSG + "d0");
+                if(respostaValida(N)) {
+                    Document docEnvio = Jsoup.parse(N.body().string());
+
+                    System.out.println(docEnvio.wholeText());
+
+                    //System.out.println(logMSG + "d1");
+                    if(docEnvio.getElementsByClass("info").size() > 0 && docEnvio.getElementsByClass("info").first().children().size() > 0) {
+                        if(docEnvio.getElementsByClass("info").first().children().first().text().equals("Operação realizada com sucesso!")) {
+                            System.out.println(logMSG + "disciplinaEnviarTarefa() Identificou confirmação de envio. Tarefa enviada com sucesso");
+                            //System.out.println(logMSG + "d2");
+                            return true;
+                        } else {
+                            System.out.println(logMSG + "disciplinaEnviarTarefa() Não identificou confirmação de envio. Algum erro ocorreu");
+                            //System.out.println(logMSG + "d3");
+                            return false;
+                        }
+                    } else {
+                        System.out.println(logMSG + "disciplinaEnviarTarefa() Não identificou o pop-up de confirmação de envio");
+                        //System.out.println(logMSG + "d4");
+                        return false;
+                    }
+                }
+                //System.out.println(logMSG + "d5");
+            } else {
+                System.out.println(logMSG + "disciplinaEnviarTarefa() Erro solicitar página tarefa");
+                return false;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+         //   System.out.println(logMSG + "d6");
+            return false;
+        }
+     //   System.out.println(logMSG + "d7");
+        return false;
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
