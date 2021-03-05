@@ -56,23 +56,23 @@ public class Usuario {
     //      this.botoes = botoes;
     // }
 
-    public Integer matricula() {
+    public Integer getMatricula() {
         return this.matricula;
     }
-    public String nome() {return this.nome;}
-    public String urlAvatar() {return this.urlAvatar;}
-    public String campus() {return this.campus;}
+    public String getNome() {return this.nome;}
+    public String getUrlAvatar() {return this.urlAvatar;}
+    public String getCampus() {return this.campus;}
     public boolean discente() {return (tipo == tipoUsuario.DISCENTE);}
     public boolean docente() {return (tipo == tipoUsuario.DOCENTE);}
-    public String email() {return this.email;}
-    public String usuario() {return this.login;}
+    public String getEmail() {return this.email;}
+    public String getUsuario() {return this.login;}
 
-    public ArrayList<Disciplina> disciplinasAtuais() {
+    public ArrayList<Disciplina> getDisciplinasAtuais() {
         return this.disciplinasAtuais;
     }
-    public Disciplina disciplina(String nome) {
+    public Disciplina getDisciplina(String nome) {
         for(Disciplina d : disciplinasAtuais) {
-            if(d.nome().equals(nome)) return d;
+            if(d.getNome().equals(nome)) return d;
         }
         return null;
     }

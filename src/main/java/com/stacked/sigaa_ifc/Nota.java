@@ -18,21 +18,21 @@ public class Nota {
         this.descricao = descricao;
     }
 
-    public float nota() {
+    public float getNota() {
         return nota;
     }
-    public float notaMax() { return notaMax; }
-    public Disciplina disciplina() {
+    public float getNotaMax() { return notaMax; }
+    public Disciplina getDisciplina() {
         return disciplina;
     }
-    public String abrev() { return abrev; }
-    public String periodo() {
+    public String getAbrev() { return abrev; }
+    public String getPeriodo() {
         return periodo;
     }
-    public String descricao() {
+    public String getDescricao() {
         return descricao;
     }
-    public float peso() {
+    public float getPeso() {
         return peso;
     }
 }

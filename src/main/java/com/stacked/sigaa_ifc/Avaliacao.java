@@ -18,7 +18,7 @@ public class Avaliacao {
         this.descricao = descricao;
     }
 
-    public Disciplina disciplina() {return disciplina;}
-    public Date data() {return data;}
-    public String descricao() {return descricao;}
+    public Disciplina getDisciplina() {return disciplina;}
+    public Date getData() {return data;}
+    public String getDescricao() {return descricao;}
 }

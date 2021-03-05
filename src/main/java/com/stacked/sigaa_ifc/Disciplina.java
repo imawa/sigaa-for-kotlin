@@ -11,7 +11,7 @@ public class Disciplina {
         this.frontEndIdTurma = frontEndIdTurma;
     }
 
-    public String nome() {
+    public String getNome() {
         return nome;
     }
 
@@ -22,7 +22,6 @@ public class Disciplina {
     String id() {
         return id;
     }
-
     void definirId(String id) {
         this.id = id;
     }

@@ -6,6 +6,7 @@ import okhttp3.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -389,7 +390,7 @@ public class Sessao {
                         .add("javax.faces.ViewState", javaxViewState(D))
                         .add("formAtividades:visualizarTarefaTurmaVirtual", "formAtividades:visualizarTarefaTurmaVirtual")
                         .add("id", tarefa.getId())
-                        .add("idTurma", tarefa.disciplina().id()) //TODO: arrumar pras que nao tem id
+                        .add("idTurma", tarefa.getDisciplina().id()) //TODO: arrumar pras que nao tem id
                         .build();
 
                 return post("/sigaa/portais/discente/discente.jsf#", body_tarefa);
@@ -586,14 +587,71 @@ public class Sessao {
         }
     }
 
+    //Obtem o form de uma tarefa, que é usado pra enviar a tarefa
+    //TODO: Testar se dá pra enviar mesmo assim. Não tive oportunidade para testar ainda
+    public FormTarefa disciplinaObterFormTarefa(Tarefa tarefa) {
+        if (tarefa == null || !tarefa.enviavel()) return null;
 
-    public boolean disciplinaEnviarTarefa(Tarefa tarefa, String comentarios, String nomeArquivo, byte[] arquivo) {
-        if (tarefa == null) return false;
         try {
-            Response T = disciplinaAbrirEnvioTarefa(tarefa);
+            Response respostaPgTarefa = disciplinaAbrirEnvioTarefa(tarefa);
+            if (respostaValida(respostaPgTarefa)) {
+                Document docTarefa = Jsoup.parse(respostaPgTarefa.body().string());
+                ////////////////////////////////////////////////////////
+                //Conferir o que a tarefa requer
+                boolean input_arquivo = false, input_comentarios = false, input_arquivo_obrigatorio = false;
+                if(docTarefa.getElementsByClass("form").size() > 0 && docTarefa.getElementsByClass("form").first().getElementsByTag("label").size() > 0) {
+                    Element eForm = docTarefa.getElementsByClass("form").first();
+                    if(eForm.getElementsByAttributeValueContaining("name", "idComentarios").size() == 1) input_arquivo = true;
+                    if(eForm.getElementsByAttributeValueContaining("name", "idArquivo").size() == 1) input_comentarios = true;
+                    // Algumas tarefas requerem o campo de arquivo
+                    if(input_arquivo) {
+                        if(eForm.getElementsByAttributeValueContaining("name", "idArquivo").first().parent().getElementsByTag("label").size() > 0) {
+                            input_arquivo_obrigatorio = (eForm.getElementsByAttributeValueContaining("name", "idArquivo").first().parent().getElementsByTag("label").first().getElementsByAttributeValueContaining("class", "required").size() == 1);
+                        }
+                    }
+                    //TODO: Conferir campo de resposta e sua obrigatoriedade quando haver algum
+                    //TODO: Conferir se campo de resposta não é obrigatório quando haver algum
+                } else {
+                    System.out.println(logMSG + "disciplinaObterFormTarefa() Página acessada não possui um form");
+                    return null;
+                }
+                ////////////////////////////////////////////////////////
+                //Pegar os inputs do form escondido da pagina
+                String j_id_jsp = "";
+                ArrayList<String> infoEscondidaForm = new ArrayList<>();
+                for (Element i : docTarefa.getElementsByClass("responderTarefa").get(0).getElementsByTag("input")) {
+                    if (i.attr("type").equals("hidden")) {
+                        //j_id_jsp
+                        if(j_id_jsp.equals("")) {
+                            j_id_jsp = i.attr("name").split(":")[0];
+                        }
+                        //informacoes
+                        infoEscondidaForm.add(i.attr("name"));
+                        infoEscondidaForm.add(i.attr("value"));
+                    }
+                }
+                ////////////////////////////////////////////////////////
+                FormTarefa form_tarefa = new FormTarefa(tarefa, j_id_jsp, infoEscondidaForm, input_comentarios, input_arquivo, input_arquivo_obrigatorio, false, false);//TODO: resposta
+                return form_tarefa;
+                } else {
+                System.out.println(logMSG + "disciplinaObterFormTarefa() Erro solicitar página tarefa");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println(logMSG + "disciplinaObterFormTarefa() Ocorreu algum erro");
+        }
+        return null;
+    }
+
+    //TODO 0: Trocar pelo form
+    public boolean disciplinaEnviarTarefa(FormTarefa formTarefa) {
+        if (formTarefa.getTarefa() == null || !formTarefa.getTarefa().enviavel()) return false;
+
+        try {
+            Response T = disciplinaAbrirEnvioTarefa(formTarefa.getTarefa());
             if (respostaValida(T)) {
                 Document doc_tarefa = Jsoup.parse(T.body().string());
-
+                ////////////////////////////////////////////////////////
                 //Conferir se a tarefa aceita o que foi inserido
                 boolean input_arquivo = false, input_comentarios = false, input_arquivo_obrigatorio = false;
 
@@ -617,12 +675,12 @@ public class Sessao {
                 }
 
                 //Requer arquivo, mas não há arquivo
-                if(input_arquivo_obrigatorio && (arquivo == null || nomeArquivo == null || nomeArquivo == "")) {
+                if(input_arquivo_obrigatorio && (formTarefa.getArquivo() == null || formTarefa.getNomeArquivo() == null || formTarefa.getNomeArquivo() == "")) {
                     System.out.println(logMSG + "disciplinaEnviarTarefa() Tarefa requer um arquivo, mas não foi inserido um arquivo");
                     return false;
                 }
                 //Não aceita arquivo, mas há algum arquivo
-                if(!input_arquivo && (arquivo != null || nomeArquivo != null)) {
+                if(!input_arquivo && (formTarefa.getArquivo() != null || formTarefa.getNomeArquivo() != null)) {
                     System.out.println(logMSG + "disciplinaEnviarTarefa() Tarefa não aceita arquivo, mas foi inserido um arquivo");
                     return false;
                 }
@@ -632,8 +690,9 @@ public class Sessao {
                     return false; //Tarefa não aceita algum dos dois
                 }
                 //TODO: Aceita resposta, sem resposta & Com resposta, não aceita resposta
-
+                ////////////////////////////////////////////////////////
                 //Pegar os inputs do form invisível da pagina
+                /*
                 String j_id_jsp = "";
                 ArrayList<String> form = new ArrayList<>();
                 for (Element i : doc_tarefa.getElementsByClass("responderTarefa").get(0).getElementsByTag("input")) {
@@ -647,23 +706,23 @@ public class Sessao {
                         form.add(i.attr("name"));
                         form.add(i.attr("value"));
                     }
-                }
+                }*/
 
                 // o sig envia um multi part form body no envio de tarefa
                 //TODO: Body que envia campo de resposta
                 //TODO 2: Body pra quando não precisa de arquivo
                 RequestBody body_envioTarefa = new MultipartBody.Builder()
                         .setType(MultipartBody.FORM)
-                        .addFormDataPart(j_id_jsp, j_id_jsp)
-                        .addFormDataPart(form.get(0), form.get(1))
-                        .addFormDataPart(form.get(2), form.get(3))
-                        .addFormDataPart(form.get(4), form.get(5))
-                        .addFormDataPart(form.get(6), form.get(7))
-                        .addFormDataPart(form.get(8), form.get(9))
-                        .addFormDataPart(form.get(10), form.get(11))
-                        .addFormDataPart(j_id_jsp + ":idArquivo", nomeArquivo, RequestBody.create(MediaType.parse("application/octet-stream"), arquivo))
-                        .addFormDataPart(j_id_jsp + ":idComentarios", comentarios)
-                        .addFormDataPart(j_id_jsp + ":idEnviar", "Enviar")
+                        .addFormDataPart(formTarefa.j_id_jsp(), formTarefa.j_id_jsp())
+                        .addFormDataPart(formTarefa.infoEscondidaForm().get(0), formTarefa.infoEscondidaForm().get(1))
+                        .addFormDataPart(formTarefa.infoEscondidaForm().get(2), formTarefa.infoEscondidaForm().get(3))
+                        .addFormDataPart(formTarefa.infoEscondidaForm().get(4), formTarefa.infoEscondidaForm().get(5))
+                        .addFormDataPart(formTarefa.infoEscondidaForm().get(6), formTarefa.infoEscondidaForm().get(7))
+                        .addFormDataPart(formTarefa.infoEscondidaForm().get(8), formTarefa.infoEscondidaForm().get(9))
+                        .addFormDataPart(formTarefa.infoEscondidaForm().get(10), formTarefa.infoEscondidaForm().get(11))
+                        .addFormDataPart(formTarefa.j_id_jsp() + ":idArquivo", formTarefa.getNomeArquivo(), RequestBody.create(MediaType.parse("application/octet-stream"), formTarefa.getArquivo()))
+                        .addFormDataPart(formTarefa.j_id_jsp() + ":idComentarios", formTarefa.getComentarios())
+                        .addFormDataPart(formTarefa.j_id_jsp() + ":idEnviar", "Enviar")
                         .addFormDataPart("javax.faces.ViewState", javaxViewState(doc_tarefa))
                         .build();
                 //https://sig.ifc.edu.br/sigaa/ava/TarefaTurma/enviarTarefa.jsf

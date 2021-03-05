@@ -31,17 +31,17 @@ public class Tarefa {
         this.disciplina = disciplina;
     }
 
-    public String titulo() { return titulo; }
-    public String descricao() { return descricao; }
-    public Date inicio() { return inicio; }
-    public Date fim() { return fim; }
-    public int envios() { return envios; }
+    public String getTitulo() { return titulo; }
+    public String getDescricao() { return descricao; }
+    public Date getInicio() { return inicio; }
+    public Date getFim() { return fim; }
+    public int getEnvios() { return envios; }
     public boolean enviavel() { return enviavel; }
     public boolean enviada() { return enviada; }
     public boolean corrigida() { return corrigida; }
     public boolean contemArquivo() { return (urlDownload != ""); }
-    public String urlArquivo() { return urlDownload; }
-    public Disciplina disciplina() { return disciplina; }
+    public String getUrlArquivo() { return urlDownload; }
+    public Disciplina getDisciplina() { return disciplina; }
 
     void definirIds(String id, String j_id) {
         this.id = id;
