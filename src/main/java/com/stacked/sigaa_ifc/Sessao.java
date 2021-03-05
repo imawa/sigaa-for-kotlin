@@ -488,7 +488,7 @@ public class Sessao {
                     Document doc_tarefas = Jsoup.parse(N.body().string());
                     return Parsers.paginaTarefasDisciplinaTarefas(doc_tarefas, url_base, d);
                 } else {
-                    System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página de notas");
+                    System.out.println(logMSG + "disciplinaFetchNotas() Erro solicitar página de tarefas");
                     return null;
                 }
             } else {
@@ -774,6 +774,58 @@ public class Sessao {
         }
      //   System.out.println(logMSG + "d7");
         return false;
+    }
+
+    public EnvioTarefa disciplinaPegarEnvioTarefa(Tarefa t) {
+        if (t == null) return null;
+
+        try {
+            Response responsePgDisciplina = disciplinaPaginaDisciplina(t.getDisciplina());
+            if (respostaValida(responsePgDisciplina)) {
+                Document docPgDisciplina = Jsoup.parse(responsePgDisciplina.body().string());
+
+                //Body pra pedir as tarefas
+                BotaoDocumento VER_TAREFAS = botao(idBotaoDocumento.DISC_VER_TAREFAS, docPgDisciplina);
+                if (VER_TAREFAS == null) {
+                    //TODO: nao encontrou botao (nao salvo e pagina nao carregou)
+                    return null;
+                }
+
+                FormBody body_tarefas = new FormBody.Builder()
+                        .add("formMenu", "formMenu")
+                        .add(VER_TAREFAS.j_id_jsp()[0][0], VER_TAREFAS.j_id_jsp()[0][1])
+                        .add("javax.faces.ViewState", javaxViewState(docPgDisciplina))
+                        .add(VER_TAREFAS.j_id_jsp()[1][0], VER_TAREFAS.j_id_jsp()[1][1])
+                        .build();
+
+                Response responsePgTarefas = post("/sigaa/ava/index.jsf", body_tarefas);
+                if (respostaValida(responsePgTarefas)) {
+                    Document docTarefas = Jsoup.parse(responsePgTarefas.body().string());
+
+                    FormBody body_envioTarefa = new FormBody.Builder()
+                            .add(t.postArgsVisualizar()[0], t.postArgsVisualizar()[0])
+                            .add("javax.faces.ViewState", javaxViewState(docTarefas))
+                            .add(t.postArgsVisualizar()[1], t.postArgsVisualizar()[1])
+                            .add("id", t.postArgsVisualizar()[2])
+                            .build();
+
+                    Response responseEnvioTarefa = post("/sigaa/ava/TarefaTurma/listar.jsf", body_envioTarefa);
+                    if(respostaValida(responseEnvioTarefa)) {
+                        Document docEnvioTarefa = Jsoup.parse(responseEnvioTarefa.body().string());
+                        return Parsers.paginaTarefaEnvioTarefa(docEnvioTarefa, t, url_base);
+                    } else {
+                        System.out.println(logMSG + "disciplinaPegarEnvioTarefa() Erro solicitar página do envio");
+                    }
+                } else {
+                    System.out.println(logMSG + "disciplinaPegarEnvioTarefa() Erro solicitar página de tarefas");
+                }
+            } else {
+                System.out.println(logMSG + "disciplinaPegarEnvioTarefa() Erro solicitar página principal da disciplina");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -2,6 +2,7 @@ package com.stacked.sigaa_ifc;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
 import java.text.ParseException;
@@ -423,5 +424,67 @@ public class Parsers {
             }
         }
         return tarefas;
+    }
+
+    static protected EnvioTarefa paginaTarefaEnvioTarefa(Document d, Tarefa t, String url_base) {
+        Elements campos = d.getElementsByClass("campo");
+        if(campos.size() > 0) {
+            EnvioTarefa e = new EnvioTarefa(t);
+         for(Element c : campos) {
+             if(c.previousElementSibling().text().equals("Arquivo:")) {
+                 //Arquivo enviado pelo discente
+                 String urlArquivo = ((!url_base.startsWith("http://") && !url_base.startsWith("https://")) ? "http://" : "") + url_base + c.child(0).attr("href");
+                 e.setUrlArquivo(urlArquivo);
+             //    System.out.println(Sessao.logMSG + urlArquivo);
+             } else if(c.previousElementSibling().text().equals("Resposta:")) {
+                 //Resposta do discente
+                 String resposta = formatarTextoDoElemento(c);
+                 e.setResposta(resposta);
+               //  System.out.println(Sessao.logMSG + resposta);
+             } else if(c.previousElementSibling().text().equals("Comentários:")) {
+                 //Comentários do discente ou docente
+                 Element legenda = c.parent().parent().parent().getElementsByTag("legend").first();
+                 if(legenda.text().equals("Resposta enviada")) {
+                    //Discente
+                     String comentariosDiscente = formatarTextoDoElemento(c);
+                     e.setComentariosDiscente(comentariosDiscente);
+                   //  System.out.println(Sessao.logMSG + comentariosDiscente);
+                 } else {
+                     //Docente
+                     String comentariosDocente = formatarTextoDoElemento(c);
+                     e.setComentariosDocente(comentariosDocente);
+                  //   System.out.println(Sessao.logMSG + comentariosDocente);
+                 }
+             } else if(c.previousElementSibling().text().equals("Nota:")) {
+                 //Nota
+                 float nota = Float.parseFloat((c.text()).replace(",", "."));
+                 e.setNota(nota);
+              //   System.out.println(Sessao.logMSG + nota);
+             }
+            }
+            return e;
+        }
+        return null;
+    }
+
+    //TODO: Essa é provavelmente a pior maneira pra fazer isso. Tenho que algum dia encontrar uma maneira melhor para formatar corretamente o texto
+    static protected String formatarTextoDoElemento(Element e) {
+        //String texto = "";
+      //  System.out.println(Sessao.logMSG + e.children().size() + " " + e.childNodes().size() + " " + e.getAllElements().size());
+/*
+        for(Node node : e.childNodes()) {
+            //System.out.println(Sessao.logMSG + node.toString());
+
+            String s = node.toString().replace("<p>", "").replace("</p>", "\n").replace("<br>", "\n").replace("<!--</div-->", "");
+            if(s.length() > 3) {
+                String ultimas = s.substring(s.length() - 2);
+                if(ultimas.equals("\n")) {
+                    s = s.substring(0, s.length() - 2);
+                }
+            }
+
+            texto += s;
+        }*/
+        return e.text();
     }
 }
