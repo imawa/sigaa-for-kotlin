@@ -29,7 +29,7 @@ public class FormTarefa {
     String j_id_jsp() { return j_id_jsp; }
     ArrayList<String> infoEscondidaForm() { return infoEscondidaForm; }
 
-    private String comentarios = "", nomeArquivo = null;
+    private String comentarios = "", nomeArquivo = null, resposta = null;
     private byte[] arquivo = null;
     public void setArquivo(String nomeArquivo, byte[] arquivo) {
         if(!aceitaArquivo()) return;
@@ -40,8 +40,14 @@ public class FormTarefa {
         if(!aceitaComentarios()) return;
         this.comentarios = comentarios;
     }
+    public void setResposta(String resposta) {
+        if(!aceitaResposta()) return;
+        this.resposta = resposta;
+    }
     public String getNomeArquivo() { return nomeArquivo; }
     public byte[] getArquivo() { return arquivo; }
     public String getComentarios() { return comentarios; }
+    public String getResposta() { return resposta; }
+
 
 }

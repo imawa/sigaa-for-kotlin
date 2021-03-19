@@ -1,5 +1,6 @@
 package com.stacked.sigaa_ifc;
 
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -197,7 +198,7 @@ public class Parsers {
 
         if(d.body().getElementById("trAval") == null || (d.body().getElementsByClass("linhaPar").size() == 0 && d.body().getElementsByClass("linhaImpar").size() == 0)) return notas; //Notas vazias (provavelmente nem foi pra página certa)
 
-        System.out.println("1");
+      //  System.out.println("1");
         final Element linhaInfoAval = d.body().getElementById("trAval");
         final Element linhaNotaAval = (d.body().getElementsByClass("linhaPar").size() > 0) ? d.body().getElementsByClass("linhaPar").get(0) : d.body().getElementsByClass("linhaImpar").get(0);
         final Element linhaInfoPeriodo = linhaInfoAval.previousElementSibling();
@@ -205,13 +206,13 @@ public class Parsers {
         int index_periodo = 0, index_nota = 0; //pepriodo -> Trimestre, bimestre, etc... Esse período separa "Trimestre 1" de "Trimestre 1 - Reavaliação"
         //OBS: Talvez ter conferido por cada numero no linhaNotaAval teria sido melhor, mas acho que o próprio software pode calcular as médias parciais.... enfim, se for provado necessário eu corrijo isso
         //TODO: isso ta organizado ruim demais e eu me envergonho disso, pessoa que esta vendo meu codigo espaguete. tenho q dar uma ajeitada depois. o importante é que ta funcionando normalmente
-        System.out.println("2");
+       // System.out.println("2");
         for(Element e : linhaInfoAval.getAllElements()) {
             String periodo = "", abrev = "", descricao = "";
             float nota = 0, notaMax = 0, peso = 0;
             //  System.out.println(index_nota + " " + e.id());///
             if(e.id().startsWith("aval_")) {
-                System.out.println("3");
+               // System.out.println("3");
                 //Nota de algum trabalho, avaliação...
                 String id = e.id().split("_")[1];
                 //System.out.println("Debug API" + id);
@@ -222,41 +223,41 @@ public class Parsers {
                 for (int i = 0; i < 3; i++) {
                     Element x = _e.nextElementSibling();
                     if (x.id().contains(id)) {
-                        System.out.println("5");
+                    //    System.out.println("5");
                         if (x.id().startsWith("abrevAval_")) {
-                            System.out.println("4");
+                         //   System.out.println("4");
                             //Abreviacao
                             //   System.out.println("abrev");
                             abrev = (x.val() != null) ? x.val() : "";
                         } else if (x.id().startsWith("denAval_")) {
-                            System.out.println("6");
+                         //   System.out.println("6");
                             //Descricao
                             //      System.out.println("desc");
                             descricao = (x.val() != null) ? x.val() : "";
                             //   System.out.println(descricao);
                         } else if (x.id().startsWith("notaAval_")) {
-                            System.out.println("7");
+                     //       System.out.println("7");
                             //    System.out.println(x.val() + (x.val() != ""));
                             //Nota maxima
                             notaMax = (x.val() != "") ? Float.parseFloat(x.val()) : -1 ;
                         } else if (x.id().startsWith("pesoAval_")) {
-                            System.out.println("8");
+                       //     System.out.println("8");
                             //         System.out.println("peso");
                             //Peso
                             peso = (x.val() != "") ? Float.parseFloat(x.val()) : -1;
                         }
                     }
-                    System.out.println("9");
+               //     System.out.println("9");
                     _e = x;
                 }
 
                 //NOTA EM SI
                 //   System.out.println(index_nota);
                 //    System.out.println(linhaInfoPeriodo.child(index_periodo+2).text());
-                System.out.println("10");
+              //  System.out.println("10");
                 periodo = linhaInfoPeriodo.child(index_periodo+2).text();
                 //        System.out.println(linhaNotaAval.child(index_nota+2).text());
-                System.out.println("11");
+            //    System.out.println("11");
                 //  System.out.println(linhaNotaAval.child(index_nota+2).text().length() > 0);
                 if(!(linhaNotaAval.child(index_nota+2).text().length() > 0) || linhaNotaAval.child(index_nota+2).text() == "") {
                     nota = -1;
@@ -267,20 +268,20 @@ public class Parsers {
                         nota = -1;
                     }
                 }
-                System.out.println("12");
+            //    System.out.println("12");
                 notas.add(new Nota(disc, abrev, periodo, nota, notaMax, peso, descricao));
-                System.out.println("13");
+             //   System.out.println("13");
                 index_nota++;
             } else if(e.id().contains("unid")) {
                 //Nota final do periodo
                 //desculpa por acidentalmente ter feito o codigo assim, serio. algum dia eu arrumo
                 //        System.out.println(index_nota);
                 //      System.out.println(linhaInfoPeriodo.child(index_periodo+2).text());
-                System.out.println("14");
+               // System.out.println("14");
                 //TODO: eh melhor eu conferir se isso nao eh null de uma vez pra n crashar
                 periodo = linhaInfoPeriodo.child(index_periodo+2).text();
                 //      System.out.println(linhaNotaAval.child(index_nota+2).text());
-                System.out.println("15");
+               // System.out.println("15");
                 //todo: arrumar isso ali em cima e aqui dps
                 if(!(linhaNotaAval.child(index_nota+2).text().length() > 0) || linhaNotaAval.child(index_nota+2).text() == "") {
                     nota = -1;
@@ -293,7 +294,7 @@ public class Parsers {
                 }
 
                 //System.out.println(periodo + " " + nota + " " + descricao);
-                System.out.println("16");
+              //  System.out.println("16");
                 notas.add(new Nota(disc, "Nota", periodo, nota, 10, 1, "Nota " + periodo)); //Me pergunto se 10 sempre é o maximo aqui....
                 index_nota++;
                 index_periodo++;
@@ -334,6 +335,10 @@ public class Parsers {
                 }
             }
 
+            //TODO: conferir quando tiver oportunidade se eu nao ferrei a data disso aqui
+            if(hora.length() != 5 || hora.charAt(3) != ':') {
+                hora = "00:00";
+            }
             Date data = new Date();
             try {
                 data = Avaliacao.formato_data.parse(dia + " " + hora);
@@ -467,24 +472,20 @@ public class Parsers {
         return null;
     }
 
-    //TODO: Essa é provavelmente a pior maneira pra fazer isso. Tenho que algum dia encontrar uma maneira melhor para formatar corretamente o texto
+    //TODO: Essa é provavelmente a pior maneira pra fazer isso, o importante é que funciona por enquanto. Tenho que algum dia encontrar uma maneira melhor para formatar corretamente o texto
     static protected String formatarTextoDoElemento(Element e) {
-        //String texto = "";
-      //  System.out.println(Sessao.logMSG + e.children().size() + " " + e.childNodes().size() + " " + e.getAllElements().size());
-/*
-        for(Node node : e.childNodes()) {
-            //System.out.println(Sessao.logMSG + node.toString());
+        String texto = "";
 
-            String s = node.toString().replace("<p>", "").replace("</p>", "\n").replace("<br>", "\n").replace("<!--</div-->", "");
-            if(s.length() > 3) {
-                String ultimas = s.substring(s.length() - 2);
-                if(ultimas.equals("\n")) {
-                    s = s.substring(0, s.length() - 2);
-                }
+        for(int i = 0; i < e.childNodes().size(); i++) {
+            Document d = Jsoup.parse(e.childNodes().get(i).toString());
+
+            texto += d.text();
+
+            if(i+1 < e.childNodes().size() && (d.getElementsByTag("p").size() > 0 || d.getElementsByTag("br").size() > 0)) {
+                texto += "\n";
             }
+        }
 
-            texto += s;
-        }*/
-        return e.text();
+        return texto;
     }
 }
