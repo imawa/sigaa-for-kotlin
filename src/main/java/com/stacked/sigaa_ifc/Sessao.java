@@ -1,19 +1,13 @@
 package com.stacked.sigaa_ifc;
 
-import android.net.Uri;
-
 import okhttp3.*;
 
-import java.io.File;
 import java.io.IOException;
-import java.text.Normalizer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import okhttp3.FormBody;
 
@@ -41,20 +35,10 @@ public class Sessao {
     }
 
     /*
-    renovarCliente()
-    Caso o cliente dê algum problema, etc.
-     */
-    private void renovarCliente() {
-        client = new OkHttpClient();
-    }
-
-    /*
     get(url)
     Usado pra dar os requests de GET.
     */
     private Response get(String caminho) throws IOException {
-    //    if (JSESSIONID != null && dataUltimaPg != 0 && sessionTimeout())
-   //         throw new IOException(JSESSIONID + " Session Timeout");
         Request request = new Request.Builder()
                 .url("https://" + url_base + caminho)
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -69,8 +53,6 @@ public class Sessao {
     Usado pra dar os requests de POST.
      */
     private Response post(String caminho, FormBody body) throws IOException {
-     //   if (JSESSIONID != null && dataUltimaPg != 0 && sessionTimeout())
-    //        throw new IOException(JSESSIONID + " Session Timeout");
         Request request = new Request.Builder()
                 .url("https://" + url_base + caminho)
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -96,8 +78,17 @@ public class Sessao {
 
     //confere a barra que indica o nome do usuario
     private boolean usuarioLogado(Document d) {
-        if(d.getElementsByClass("usuario").size() > 0 && d.getElementsByClass("usuario").get(0).text().equals(usuarioSalvo.getNome())) return true;
-        if(d.getElementById("painelDadosUsuario") != null && d.getElementById("painelDadosUsuario").text().contains(usuarioSalvo.getNome())) return true;
+        return usuarioLogado(d, true);
+    }
+
+    private boolean usuarioLogado(Document d, boolean conferirNome) {
+        if(conferirNome) {
+            if(d.getElementsByClass("usuario").size() > 0 && d.getElementsByClass("usuario").get(0).text().equals(usuarioSalvo.getNome())) return true;
+            if(d.getElementById("painelDadosUsuario") != null && d.getElementById("painelDadosUsuario").text().contains(usuarioSalvo.getNome())) return true;
+        } else {
+            if(d.getElementsByClass("usuario").size() > 0) return true;
+            if(d.getElementById("painelDadosUsuario") != null) return true;
+        }
         return false;
     }
 
@@ -114,239 +105,90 @@ public class Sessao {
         }
         return true;
     }
-    /*
-    sessionTimeout()
-    Eu to assumindo que a sessão do SIGAA deslogue automaticamente após 1 hora (contador do SIGAA). Essa função apenas confere se esse contador expirou pra sessão atual baseado na data de login
-    Retorna true se expirou, false se não.
-     */
-   // public boolean sessionTimeout() {
-  //      long t = 55 * 60 * 1000; //55 minutos para margem de erro
-  //      return (System.currentTimeMillis() - dataUltimaPg > t);
-  //  }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //TODO: limpar codigo aqui
-    /*
-    novoJSESSIONID()
-    Obtém um novo JSESSIONID. Retorna se foi possível atualizar o JSESSIONID corretamente.
-     */
-    private boolean novoJSESSIONID() {
-        JSESSIONID = null;
-        try {
-            Response r = get("/sigaa/verTelaLogin.do");
-            if (respostaValida(r)) {
-                JSESSIONID = r.header("Set-Cookie").replace("(", "").replace(")", "").split(";")[0].split("JSESSIONID=")[1];
-                System.out.println(logMSG + "Obtido um JSESSIONID");
-            } else {
-                System.out.println(logMSG + "novoJSESSIONID() Resposta falhou");
-                return false;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println(logMSG + "novoJSESSIONID() IOException");
-            return false;
-        }
-        return true;
-    }
 
     /*
     login(usuario, senha);
     Loga a sessão e um usuário não completo (com os dados disponíveis na página principal) se logar corretamente. Retorna null se acontecer algum erro
     */
     //TODO Tenho que limpar esse código. Principalmente pular mais de 1 aviso
-    public Usuario login(final String usuario, final String senha) {
-        //JSESSIONID
-        if (!novoJSESSIONID()) return null;
-
-        //Logar JSESSIONID
-        //Body para logar
-        final FormBody body_login = new FormBody.Builder()
-                .add("dispatch", "logOn")
-                .add("urlRedirect", "")
-                .add("subsistemaRedirect", "")
-                .add("acao", "")
-                .add("acessibilidade", "")
-                .add("user.login", usuario)
-                .add("user.senha", senha)
-                .build();
-
-        System.out.println(logMSG + "login() Enviando POST login");
+    public Usuario login(final String usuario, final String senha) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
         try {
-            Response R = post("/sigaa/logar.do", body_login);
-            if (respostaValida(R)) {
-                if (R.priorResponse() == null) {
-                    //Nao redirecionado, nao logou.
-                    System.out.println(logMSG + "logar() sem resposta. Usuário ou senha incorretos");
-                    return null;
-                } else {
-                    //Redirecionado
-                    String[] urlsLogado = {url_base + "/sigaa/verPortalDiscente.do", url_base + "/sigaa/portais/discente/discente.jsf"};
+            //JSESSIONID
+            JSESSIONID = null;
+            Response responsePgLogin = get("/sigaa/verTelaLogin.do");
+            if (!respostaValida(responsePgLogin))
+                throw new ExcecaoSIGAA("login() resposta inválida / SIGAA em manutenção");
 
-                    String urlRedirecionado = R.priorResponse().headers().get("Location").replace("https://", "").replace("http://", "");
-                    if ((urlRedirecionado.substring(urlRedirecionado.length() - 1)) == "/")
-                        urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
+            JSESSIONID = responsePgLogin.header("Set-Cookie").replace("(", "").replace(")", "").split(";")[0].split("JSESSIONID=")[1];
+            System.out.println(logMSG + "Obtido um JSESSIONID");
 
-                    if (Arrays.asList(urlsLogado).contains(urlRedirecionado)) {
+            //Logar JSESSIONID
+            //Body
+            final FormBody body_login = new FormBody.Builder()
+                    .add("dispatch", "logOn")
+                    .add("urlRedirect", "")
+                    .add("subsistemaRedirect", "")
+                    .add("acao", "")
+                    .add("acessibilidade", "")
+                    .add("user.login", usuario)
+                    .add("user.senha", senha)
+                    .build();
 
-                        //Redirecionado para uma das paginas comuns pos-login
-                        System.out.println(logMSG + "logar() sem problemas");
-               //         dataUltimaPg = System.currentTimeMillis();
+            Response responseLogin = post("/sigaa/logar.do", body_login);
+            if (!respostaValida(responseLogin))
+                throw new ExcecaoSIGAA("login() resposta inválida / SIGAA em manutenção");
 
-                        //Dados
-                        Document d = Jsoup.parse(R.body().string());
-                        usuarioSalvo = Parsers.mainPageDadosUsuario(d, url_base, usuario);
-                        return usuarioSalvo;
-
-                    } else if (urlRedirecionado.contains(url_base + "/sigaa/telaAvisoLogon.jsf")) {
-
-                        //Redirecionado para algum aviso
-                        System.out.println(Sessao.logMSG + "Redirecionado para um aviso");
-
-                        Document d = Jsoup.parse(R.body().string());
-                        FormBody body_aviso = Parsers.paginaAvisoSkipBody(d);
-                        try {
-                            Response A = post("/sigaa/telaAvisoLogon.jsf", body_aviso);
-                            if (respostaValida(A)) {
-                                if (A.priorResponse() == null) {
-                                    //Nao redirecionado, nao logou.
-                                    System.out.println(logMSG + "Pular aviso sem resposta");
-                                } else {
-                                    //Redirecionado para a página principal
-                                    Document f = Jsoup.parse(A.body().string());
-                                    usuarioSalvo = Parsers.mainPageDadosUsuario(f, url_base, usuario);
-                                    return usuarioSalvo;
-                                }
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        return null;
-
-                    } else {
-
-                        //Redirecionado para outra pagina
-                        System.out.println(logMSG + "logar() POST login redirecionado para a página errada? (" + urlRedirecionado + "). Conferindo logado()");
-                        try {
-                            Response r = get("/sigaa/portais/discente/discente.jsf");
-                            if (respostaValida(r)) {
-                                //Se redirecionou é porque nao ta logado
-                                if (!(r.priorResponse() != null && r.priorResponse().isRedirect())) {
-                                    //Logado
-                                    System.out.println(logMSG + "logar() sem problemas");
-                               //     dataUltimaPg = System.currentTimeMillis();
-
-                                    //Dados
-                                    Document d = Jsoup.parse(R.body().string());
-                                    usuarioSalvo = Parsers.mainPageDadosUsuario(d, url_base, usuario);
-                                    return usuarioSalvo;
-                                } else return null;
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            System.out.print(logMSG + "login() Falha ao conferir login");
-                            return null;
-                        }
-                        return null;
-
-                    }
-                }
-            } else {
-                System.out.print(logMSG + "login() Falha POST login (sem sucesso)");
+            //Usuario ou senha incorretos (retorna null)
+            if (responseLogin.priorResponse() == null) {
+                System.out.println(logMSG + "login() sem resposta -> usuário ou senha incorretos");
                 return null;
             }
+
+
+            Document docRespostaLogin = Jsoup.parse(responseLogin.body().string());
+            String urlRedirecionado = responseLogin.priorResponse().headers().get("Location").replace("https://", "").replace("http://", "");
+            if ((urlRedirecionado.substring(urlRedirecionado.length() - 1)) == "/")
+                urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
+            //Pular página de aviso
+            while (urlRedirecionado.contains(url_base + "/sigaa/telaAvisoLogon.jsf")) {
+                //TODO: Testar. Não tive oportunidade para testar após a limpeza do código
+                System.out.println(Sessao.logMSG + "login() redirecionado para um aviso");
+
+                FormBody bodyAviso = Parsers.paginaAvisoSkipBody(docRespostaLogin);
+                Response responseAviso = post("/sigaa/telaAvisoLogon.jsf", bodyAviso);
+                if (!respostaValida(responseAviso))
+                    throw new ExcecaoSIGAA("login() resposta inválida / SIGAA em manutenção");
+                if (responseAviso.priorResponse() == null)
+                    throw new ExcecaoSIGAA("login() não foi possível pular o aviso");
+
+                docRespostaLogin = Jsoup.parse(responseAviso.body().string());
+                urlRedirecionado = responseAviso.priorResponse().headers().get("Location").replace("https://", "").replace("http://", "");
+                if ((urlRedirecionado.substring(urlRedirecionado.length() - 1)) == "/")
+                    urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
+            }
+
+            //Conferir se logou
+            if (!usuarioLogado(docRespostaLogin, false)) {
+                System.out.println(logMSG + "login() não foi identificado o login na página redirecionada");
+                Response responsePaginaInicial = get("/sigaa/portais/discente/discente.jsf");
+                if (!respostaValida(responsePaginaInicial))
+                    throw new ExcecaoSIGAA("login() resposta inválida / SIGAA em manutenção");
+
+                Document docPgDiscente = Jsoup.parse(responsePaginaInicial.body().string());
+                if (!usuarioLogado(docPgDiscente, false))
+                    throw new ExcecaoSessaoExpirada("login() não foi possível logar");
+            }
+
+            System.out.println(logMSG + "login() sem problemas");
+            usuarioSalvo = Parsers.mainPageDadosUsuario(docRespostaLogin, url_base, usuario);
+            return usuarioSalvo;
         } catch (IOException e) {
-            e.printStackTrace();
-            System.out.print(logMSG + "login() Falha POST login");
-            return null;
+            throw new ExcecaoConexao("login() IOException");
         }
     }
-
-    //TODO: Parei para pensar aqui: as informações daqui talvez não sejam muito uteis por enquanto para o aplicativo, então vou deixar isso para adicionar algum outro dia se precisar
-    /*
-    usuarioCompleto()
-    Obtém as informações do usuário da página principal, meus dados, dos botões do SIGAA (meus dados e disciplinas) e retorna
-     *//*
-    public usuario usuarioCompleto() {
-        ////**1** PEGAR MAIN PAGE
-        try {
-            Response G = get("/sigaa/portais/discente/discente.jsf");
-            if (respostaValida(G)) {
-                Document d = Jsoup.parse(G.body().string());
-                ////INFORMACOES DA MAIN PAGE
-                //Disciplinas
-                final disciplina[] disciplinas = parsers.mainPageDisciplinas(d);
-                //Outras informacoes
-                final String nome = d.body().getElementsByClass("nome").get(0).text();
-                final String campus = d.body().getElementsByClass("unidade").get(0).text();
-                //TODO: AVATAR
-                //Botao "meus dados"
-                final String j_id_jsp_meusDados = d.body().getElementsByAttributeValueContaining("id", "meusDadosPessoais").get(0).attr("id").split(":")[0];
-                final botaoDocumento meusDados = new botaoDocumento(idBotaoDocumento.MEUS_DADOS, new String[][]{{j_id_jsp_meusDados, j_id_jsp_meusDados}, {j_id_jsp_meusDados + ":meusDadosPessoais", j_id_jsp_meusDados + ":meusDadosPessoais"}});
-
-                ////**2** PEGAR A PAGINA DO "MEUS DADOS"
-                FormBody body_dados = new FormBody.Builder()
-                        .add(meusDados.j_id_jsp()[0][0], meusDados.j_id_jsp()[0][1])
-                        .add("javax.faces.ViewState", javaxViewState(d))
-                        .add(meusDados.j_id_jsp()[1][0], meusDados.j_id_jsp()[1][0])
-                        .build();
-
-                Response P = post("/sigaa/portais/discente/discente.jsf", body_dados);
-                if (respostaValida(P)) {
-                    Document m = Jsoup.parse(P.body().string());
-                    //Informação restante nos "meus dados"
-                    final int matricula = Integer.parseInt(m.body().getElementsContainingText("Matrícula:").last().lastElementSibling().text());
-                    final String email = m.body().getElementById("formDiscente:txtEmail").attr("value");
-
-                    //**3** Solicitar uma disciplina se houver e salvar os botoes
-                    if (disciplinas.length > 0) {
-                        final Response mainDisciplina = disciplinaPaginaDisciplina(disciplinas[0]);
-                        if (mainDisciplina != null && respostaValida(mainDisciplina)) {
-                            Document DI = Jsoup.parse(mainDisciplina.body().string());
-                            //Juntar o botaoDocumento meus Dados + botoesDisciplina
-                            ArrayList<botaoDocumento> botoesUsuario = parsers.paginaDisciplinaBotoes(DI);
-                            botoesUsuario.add(meusDados);
-                            //botaoDocumento[] botoesUsuario = Arrays.copyOf(botoesDisciplina, botoesDisciplina.length + 1);
-                            //botoesUsuario[0] = meusDados;
-                            //System.arraycopy(botoesDisciplina, 0, botoesUsuario, 1, botoesDisciplina.length);
-
-                            usuarioSalvo = new usuario(nome, campus, email, matricula, disciplinas, botoesUsuario);
-                            return usuarioSalvo;
-                        } else {
-                            System.out.println(logMSG + "inicializarUsuario() POST disciplina sem sucesso");
-                            return null;
-                        }
-                    } else {
-                        //todo: usuario sem disciplinas
-                        //Usuario = new usuario(nome, campus, email, matricula, new botaoDocumento[] {meusDados});
-                        System.out.println(logMSG + logado());
-                        ArrayList<botaoDocumento> botoesUsuario = new ArrayList<botaoDocumento>();
-                        botoesUsuario.add(meusDados);
-                        usuarioSalvo = new usuario(nome, campus, email, matricula, botoesUsuario);
-                        return usuarioSalvo;
-                    }
-                } else {
-                   System.out.println(logMSG + "inicializarUsuario() POST meus dados sem sucesso");
-                    return null;
-                }
-            } else {
-                System.out.println(logMSG + "inicializarUsuario() GET main page sem sucesso");
-                return null;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println(logMSG + "inicializarUsuario() " + e);
-            return null;
-        }
-    }*/
-
-    /*
-    Retorna o usuario com os dados salvos através dessa sessão
-     */
-    /*public Usuario usuarioSalvo() {
-        return this.usuarioSalvo;
-    }*/
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -380,7 +222,7 @@ public class Sessao {
     }
 
     //Usado para pegar algum dos botoes no usuario salvo. Se nao encontrar nele, procura na pagina
-    BotaoDocumento getBotao(idBotaoDocumento id, Document d) {
+    private BotaoDocumento getBotao(idBotaoDocumento id, Document d) {
         if (usuarioSalvo.botao(id) != null) return usuarioSalvo.botao(id);
 
         ArrayList<BotaoDocumento> botoes = Parsers.paginaDisciplinaBotoes(d);
@@ -635,4 +477,81 @@ public class Sessao {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //TODO: Parei para pensar aqui: as informações daqui talvez não sejam muito uteis por enquanto para o aplicativo, então vou deixar isso para adicionar algum outro dia se precisar
+    /*
+    usuarioCompleto()
+    Obtém as informações do usuário da página principal, meus dados, dos botões do SIGAA (meus dados e disciplinas) e retorna
+     *//*
+    public usuario usuarioCompleto() {
+        ////**1** PEGAR MAIN PAGE
+        try {
+            Response G = get("/sigaa/portais/discente/discente.jsf");
+            if (respostaValida(G)) {
+                Document d = Jsoup.parse(G.body().string());
+                ////INFORMACOES DA MAIN PAGE
+                //Disciplinas
+                final disciplina[] disciplinas = parsers.mainPageDisciplinas(d);
+                //Outras informacoes
+                final String nome = d.body().getElementsByClass("nome").get(0).text();
+                final String campus = d.body().getElementsByClass("unidade").get(0).text();
+                //TODO: AVATAR
+                //Botao "meus dados"
+                final String j_id_jsp_meusDados = d.body().getElementsByAttributeValueContaining("id", "meusDadosPessoais").get(0).attr("id").split(":")[0];
+                final botaoDocumento meusDados = new botaoDocumento(idBotaoDocumento.MEUS_DADOS, new String[][]{{j_id_jsp_meusDados, j_id_jsp_meusDados}, {j_id_jsp_meusDados + ":meusDadosPessoais", j_id_jsp_meusDados + ":meusDadosPessoais"}});
+
+                ////**2** PEGAR A PAGINA DO "MEUS DADOS"
+                FormBody body_dados = new FormBody.Builder()
+                        .add(meusDados.j_id_jsp()[0][0], meusDados.j_id_jsp()[0][1])
+                        .add("javax.faces.ViewState", javaxViewState(d))
+                        .add(meusDados.j_id_jsp()[1][0], meusDados.j_id_jsp()[1][0])
+                        .build();
+
+                Response P = post("/sigaa/portais/discente/discente.jsf", body_dados);
+                if (respostaValida(P)) {
+                    Document m = Jsoup.parse(P.body().string());
+                    //Informação restante nos "meus dados"
+                    final int matricula = Integer.parseInt(m.body().getElementsContainingText("Matrícula:").last().lastElementSibling().text());
+                    final String email = m.body().getElementById("formDiscente:txtEmail").attr("value");
+
+                    //**3** Solicitar uma disciplina se houver e salvar os botoes
+                    if (disciplinas.length > 0) {
+                        final Response mainDisciplina = disciplinaPaginaDisciplina(disciplinas[0]);
+                        if (mainDisciplina != null && respostaValida(mainDisciplina)) {
+                            Document DI = Jsoup.parse(mainDisciplina.body().string());
+                            //Juntar o botaoDocumento meus Dados + botoesDisciplina
+                            ArrayList<botaoDocumento> botoesUsuario = parsers.paginaDisciplinaBotoes(DI);
+                            botoesUsuario.add(meusDados);
+                            //botaoDocumento[] botoesUsuario = Arrays.copyOf(botoesDisciplina, botoesDisciplina.length + 1);
+                            //botoesUsuario[0] = meusDados;
+                            //System.arraycopy(botoesDisciplina, 0, botoesUsuario, 1, botoesDisciplina.length);
+
+                            usuarioSalvo = new usuario(nome, campus, email, matricula, disciplinas, botoesUsuario);
+                            return usuarioSalvo;
+                        } else {
+                            System.out.println(logMSG + "inicializarUsuario() POST disciplina sem sucesso");
+                            return null;
+                        }
+                    } else {
+                        //todo: usuario sem disciplinas
+                        //Usuario = new usuario(nome, campus, email, matricula, new botaoDocumento[] {meusDados});
+                        System.out.println(logMSG + logado());
+                        ArrayList<botaoDocumento> botoesUsuario = new ArrayList<botaoDocumento>();
+                        botoesUsuario.add(meusDados);
+                        usuarioSalvo = new usuario(nome, campus, email, matricula, botoesUsuario);
+                        return usuarioSalvo;
+                    }
+                } else {
+                   System.out.println(logMSG + "inicializarUsuario() POST meus dados sem sucesso");
+                    return null;
+                }
+            } else {
+                System.out.println(logMSG + "inicializarUsuario() GET main page sem sucesso");
+                return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println(logMSG + "inicializarUsuario() " + e);
+            return null;
+        }
+    }*/
 }
