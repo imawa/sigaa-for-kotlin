@@ -42,8 +42,9 @@ public class Parsers {
         int n = 0;
         for(Element e : d.body().getElementsByClass("descricao")) {
             Element _e = e.child(0).child(1);
+            String periodo = d.getElementsByClass("periodo-atual").get(0).child(0).text(); //TODO: Isso funciona?
 
-            Disciplina _d = new Disciplina(_e.html(), _e.outerHtml().split("'")[3], _e.outerHtml().split("'")[5], _e.outerHtml().split("'")[11]);
+            Disciplina _d = new Disciplina(false, periodo, _e.html(), _e.outerHtml().split("'")[3], _e.outerHtml().split("'")[5], _e.outerHtml().split("'")[11]);
             String _id = e.parent().nextElementSibling().child(0).id().replace("linha_", "");
             _d.definirId(_id);
 
@@ -487,5 +488,24 @@ public class Parsers {
         }
 
         return texto;
+    }
+
+    static protected ArrayList<Disciplina> todasTurmasVirtuais(Document d) {
+        ArrayList<Disciplina> turmasVirtuais = new ArrayList<>();
+
+        Element bodyTabela = d.getElementsByClass("listagem").get(0).getElementsByTag("tbody").get(1);
+
+        String periodoAtual = "";
+        for(Element e : bodyTabela.children()) {
+            if(e.className().equals("destaque no-hover")) {
+                periodoAtual = e.text();
+            } else if(e.className().equals("linhaPar") || e.className().equals("linhaImpar")) {
+                String nome = e.child(0).text();
+                String botaoAcessoOnClick = e.getElementsByTag("a").get(0).attr("onclick");
+
+                turmasVirtuais.add(new Disciplina(true, periodoAtual, nome, botaoAcessoOnClick.split("'")[3], botaoAcessoOnClick.split("'")[5], botaoAcessoOnClick.split("'")[11]));
+            }
+        }
+        return turmasVirtuais;
     }
 }

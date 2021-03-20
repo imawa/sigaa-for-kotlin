@@ -73,7 +73,8 @@ public class Sessao {
             if (r.priorResponse() != null && r.priorResponse().isRedirect())
                 return !(r.priorResponse().headers().get("Location").contains("manutencao.html"));
             else return true;
-        } return false;
+        }
+        return false;
     }
 
     //confere a barra que indica o nome do usuario
@@ -82,12 +83,14 @@ public class Sessao {
     }
 
     private boolean usuarioLogado(Document d, boolean conferirNome) {
-        if(conferirNome) {
-            if(d.getElementsByClass("usuario").size() > 0 && d.getElementsByClass("usuario").get(0).text().equals(usuarioSalvo.getNome())) return true;
-            if(d.getElementById("painelDadosUsuario") != null && d.getElementById("painelDadosUsuario").text().contains(usuarioSalvo.getNome())) return true;
+        if (conferirNome) {
+            if (d.getElementsByClass("usuario").size() > 0 && d.getElementsByClass("usuario").get(0).text().equals(usuarioSalvo.getNome()))
+                return true;
+            if (d.getElementById("painelDadosUsuario") != null && d.getElementById("painelDadosUsuario").text().contains(usuarioSalvo.getNome()))
+                return true;
         } else {
-            if(d.getElementsByClass("usuario").size() > 0) return true;
-            if(d.getElementById("painelDadosUsuario") != null) return true;
+            if (d.getElementsByClass("usuario").size() > 0) return true;
+            if (d.getElementById("painelDadosUsuario") != null) return true;
         }
         return false;
     }
@@ -189,36 +192,65 @@ public class Sessao {
             throw new ExcecaoConexao("login() IOException");
         }
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public ArrayList<Disciplina> pegarTodasDisciplinas() throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+        try {
+            final Response responsePgTurmas = get("/sigaa/portais/discente/turmas.jsf");
+            if (!respostaValida(responsePgTurmas))
+                throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() resposta inválida / SIGAA em manutenção");
+
+            Document docTurmas = Jsoup.parse(responsePgTurmas.body().string());
+            if (!usuarioLogado(docTurmas)) throw new ExcecaoSessaoExpirada("sessão expirada");
+
+            return Parsers.todasTurmasVirtuais(docTurmas);
+        } catch (IOException e) {
+            throw new ExcecaoConexao("obterTodasDisciplinas() IOException");
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //O método para acessar uma turma da página principal é diferente de uma da página com todas as turmas
     private Document acessarPaginaTurmaVirtual(Disciplina d) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
         if (d == null) return null;
 
         try {
-                //Pegar página inicial do discente
-                final Response G = get("/sigaa/portais/discente/discente.jsf");
-                if (respostaValida(G)) {
-                    //Pegar página inicial da disciplina
-                    Document D = Jsoup.parse(G.body().string());
-                    if(!usuarioLogado(D)) throw new ExcecaoSessaoExpirada("sessão expirada");
+            String caminhoGet = (!d.paginaTodasTurmasVirtuais()) ? "/sigaa/portais/discente/discente.jsf" : "/sigaa/portais/discente/turmas.jsf", caminhoPost = (!d.paginaTodasTurmasVirtuais()) ? "/sigaa/portais/discente/discente.jsf#" : "/sigaa/portais/discente/turmas.jsf";
 
+            final Response G = get(caminhoGet);
+            if (!respostaValida(G))
+                throw new ExcecaoSIGAA("acessarPaginaTurmaVirtual() resposta invalida / SIGAA em manutenção");
 
-                    FormBody body_disciplina = new FormBody.Builder()
+            //Pegar página inicial da disciplina
+            Document D = Jsoup.parse(G.body().string());
+            if (!usuarioLogado(D)) throw new ExcecaoSessaoExpirada("sessão expirada");
+
+            FormBody body_disciplina = (!d.paginaTodasTurmasVirtuais()) ? new FormBody.Builder()
+                    .add(d.postArgs()[0], d.postArgs()[0])
+                    .add("javax.faces.ViewState", javaxViewState(D))
+                    .add(d.postArgs()[1], d.postArgs()[1])
+                    .add("frontEndIdTurma", d.postArgs()[2])
+                    .build()
+                    :
+                    new FormBody.Builder()
                             .add(d.postArgs()[0], d.postArgs()[0])
                             .add("javax.faces.ViewState", javaxViewState(D))
                             .add(d.postArgs()[1], d.postArgs()[1])
                             .add("frontEndIdTurma", d.postArgs()[2])
+                            .add("inciadoPelaBusca", "true")
+                            .add("paginaListaTurmasOrigem", "/portais/discente/turmas.jsp")
                             .build();
 
-                    Response R = post("/sigaa/portais/discente/discente.jsf#", body_disciplina);
-                    if(respostaValida(R)) {
-                        return Jsoup.parse(R.body().string());
-                    } else throw new ExcecaoSIGAA("solicitarPaginaDisciplina() resposta invalida / SIGAA em manutenção");
-                } else throw new ExcecaoSIGAA("solicitarPaginaDisciplina() resposta invalida / SIGAA em manutenção");
-            } catch (IOException e) {
-                throw new ExcecaoConexao("solicitarPaginaDisciplina() IOException");
-            }
+            Response R = post(caminhoPost, body_disciplina);
+            if (!respostaValida(R))
+                throw new ExcecaoSIGAA("acessarPaginaTurmaVirtual() resposta invalida / SIGAA em manutenção");
+
+            return Jsoup.parse(R.body().string());
+        } catch (IOException e) {
+            throw new ExcecaoConexao("acessarPaginaTurmaVirtual() IOException");
+        }
     }
 
     //Usado para pegar algum dos botoes no usuario salvo. Se nao encontrar nele, procura na pagina
@@ -247,7 +279,8 @@ public class Sessao {
             //TODO: Arrumar esse negocio horrivel aqui (botão não estava salvo e página do SIGAA retornou somente com a mensagem de "carregando")
             pgDisciplina = acessarPaginaTurmaVirtual(d);
             BOTAO = getBotao(bt, pgDisciplina);
-            if(BOTAO == null) throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() página da turma virtual não carregou");
+            if (BOTAO == null)
+                throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() página da turma virtual não carregou");
         }
 
         //Body
@@ -260,16 +293,19 @@ public class Sessao {
 
         try {
             Response responseBotao = post("/sigaa/ava/index.jsf", bodyBotao);
-            if (!respostaValida(responseBotao)) throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() resposta inválida / SIGAA em manutenção");
+            if (!respostaValida(responseBotao))
+                throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() resposta inválida / SIGAA em manutenção");
 
             Document docPgBotao = Jsoup.parse(responseBotao.body().string());
-            if(conferirSessao && !usuarioLogado(docPgBotao)) throw new ExcecaoSessaoExpirada("disciplinaAcessarBotaoMenu() sessão expirada");
+            if (conferirSessao && !usuarioLogado(docPgBotao))
+                throw new ExcecaoSessaoExpirada("disciplinaAcessarBotaoMenu() sessão expirada");
 
             return docPgBotao;
         } catch (IOException e) {
             throw new ExcecaoConexao("disciplinaAcessarBotaoMenu() IOException");
         }
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public ArrayList<Usuario> disciplinaPegarParticipantes(Disciplina d) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
         if (d == null) return new ArrayList<>();
@@ -298,19 +334,22 @@ public class Sessao {
         Document docTarefas = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_VER_TAREFAS);
         return Parsers.paginaTarefasDisciplinaTarefas(docTarefas, url_base, d);
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private Response disciplinaAbrirEnvioTarefa(Tarefa tarefa) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
         if (tarefa == null || !tarefa.enviavel()) return null;
 
         try {
-            if(tarefa.getDisciplina().id() != null) {
+            if (tarefa.getDisciplina().id() != null) {
                 // [1] Método rápido (usado pras disciplinas visíveis na página principal): página principal -> página tarefa
 
                 final Response responsePgDiscente = get("/sigaa/portais/discente/discente.jsf");
-                if (!respostaValida(responsePgDiscente)) throw new ExcecaoSIGAA("disciplinaAbrirEnvioTarefa() resposta inválida / SIGAA em manutenção");
+                if (!respostaValida(responsePgDiscente))
+                    throw new ExcecaoSIGAA("disciplinaAbrirEnvioTarefa() resposta inválida / SIGAA em manutenção");
 
                 Document docPgDiscente = Jsoup.parse(responsePgDiscente.body().string());
-                if(!usuarioLogado(docPgDiscente)) throw new ExcecaoSessaoExpirada("disciplinaAbrirEnvioTarefa() sessão expirada");
+                if (!usuarioLogado(docPgDiscente))
+                    throw new ExcecaoSessaoExpirada("disciplinaAbrirEnvioTarefa() sessão expirada");
 
                 FormBody bodyTarefa = new FormBody.Builder()
                         .add("formAtividades", "formAtividades")
@@ -336,27 +375,32 @@ public class Sessao {
         if (tarefa == null || !tarefa.enviavel()) return null;
 
         Response respostaPgTarefa = disciplinaAbrirEnvioTarefa(tarefa);
-        if (!respostaValida(respostaPgTarefa)) throw new ExcecaoSIGAA("disciplinaObterFormTarefa() resposta inválida / SIGAA em manutenção");
+        if (!respostaValida(respostaPgTarefa))
+            throw new ExcecaoSIGAA("disciplinaObterFormTarefa() resposta inválida / SIGAA em manutenção");
 
         try {
             Document docTarefa = Jsoup.parse(respostaPgTarefa.body().string());
-            if(!usuarioLogado(docTarefa)) throw new ExcecaoSessaoExpirada("disciplinaObterFormTarefa() sessão expirada");
+            if (!usuarioLogado(docTarefa))
+                throw new ExcecaoSessaoExpirada("disciplinaObterFormTarefa() sessão expirada");
             ////////////////////////////////////////////////////////
             //Conferir o que a tarefa aceita & requer
             boolean input_arquivo = false, input_comentarios = false, input_arquivo_obrigatorio = false;
-            if(docTarefa.getElementsByClass("form").size() > 0 && docTarefa.getElementsByClass("form").first().getElementsByTag("label").size() > 0) {
+            if (docTarefa.getElementsByClass("form").size() > 0 && docTarefa.getElementsByClass("form").first().getElementsByTag("label").size() > 0) {
                 Element eForm = docTarefa.getElementsByClass("form").first();
-                if(eForm.getElementsByAttributeValueContaining("name", "idComentarios").size() == 1) input_arquivo = true;
-                if(eForm.getElementsByAttributeValueContaining("name", "idArquivo").size() == 1) input_comentarios = true;
+                if (eForm.getElementsByAttributeValueContaining("name", "idComentarios").size() == 1)
+                    input_arquivo = true;
+                if (eForm.getElementsByAttributeValueContaining("name", "idArquivo").size() == 1)
+                    input_comentarios = true;
                 // Algumas tarefas requerem o campo de arquivo
-                if(input_arquivo) {
-                    if(eForm.getElementsByAttributeValueContaining("name", "idArquivo").first().parent().getElementsByTag("label").size() > 0) {
+                if (input_arquivo) {
+                    if (eForm.getElementsByAttributeValueContaining("name", "idArquivo").first().parent().getElementsByTag("label").size() > 0) {
                         input_arquivo_obrigatorio = (eForm.getElementsByAttributeValueContaining("name", "idArquivo").first().parent().getElementsByTag("label").first().getElementsByAttributeValueContaining("class", "required").size() == 1);
                     }
                 }
                 //TODO: Conferir campo de resposta e sua obrigatoriedade quando haver algum
                 //TODO: Conferir se campo de resposta não é obrigatório quando haver algum
-            } else throw new ExcecaoSIGAA("disciplinaObterFormTarefa() página da tarefa acessada não possui um form");
+            } else
+                throw new ExcecaoSIGAA("disciplinaObterFormTarefa() página da tarefa acessada não possui um form");
             ////////////////////////////////////////////////////////
             //Pegar os inputs do form escondido da página
             String j_id_jsp = "";
@@ -364,7 +408,7 @@ public class Sessao {
             for (Element i : docTarefa.getElementsByClass("responderTarefa").get(0).getElementsByTag("input")) {
                 if (i.attr("type").equals("hidden")) {
                     //j_id_jsp
-                    if(j_id_jsp.equals("")) {
+                    if (j_id_jsp.equals("")) {
                         j_id_jsp = i.attr("name").split(":")[0];
                     }
                     //informacoes
@@ -384,23 +428,30 @@ public class Sessao {
         if (formTarefa.getTarefa() == null || !formTarefa.getTarefa().enviavel()) return false;
 
         Response responsePgTarefa = disciplinaAbrirEnvioTarefa(formTarefa.getTarefa());
-        if (!respostaValida(responsePgTarefa)) throw new ExcecaoSIGAA("disciplinaEnviarTarefa() resposta inválida / SIGAA em manutenção");
+        if (!respostaValida(responsePgTarefa))
+            throw new ExcecaoSIGAA("disciplinaEnviarTarefa() resposta inválida / SIGAA em manutenção");
 
         try {
             Document docTarefa = Jsoup.parse(responsePgTarefa.body().string());
-            if(!usuarioLogado(docTarefa)) throw new ExcecaoSessaoExpirada("disciplinaEnviarTarefa() sessão expirada");
+            if (!usuarioLogado(docTarefa))
+                throw new ExcecaoSessaoExpirada("disciplinaEnviarTarefa() sessão expirada");
 
             ////Conferir se preenche a tarefa corretamente
             //Requer arquivo, mas não há arquivo
-            if(formTarefa.arquivoObrigatorio() && (formTarefa.getArquivo() == null || formTarefa.getNomeArquivo() == null || formTarefa.getNomeArquivo() == "")) throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário preenchido incorretamente");
+            if (formTarefa.arquivoObrigatorio() && (formTarefa.getArquivo() == null || formTarefa.getNomeArquivo() == null || formTarefa.getNomeArquivo() == ""))
+                throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário preenchido incorretamente");
             //Não aceita arquivo, mas há algum arquivo
-            if(!formTarefa.aceitaArquivo() && (formTarefa.getArquivo() != null || formTarefa.getNomeArquivo() != null)) throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário preenchido incorretamente");
+            if (!formTarefa.aceitaArquivo() && (formTarefa.getArquivo() != null || formTarefa.getNomeArquivo() != null))
+                throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário preenchido incorretamente");
             //TODO: Não aceita comentário
-            if(!formTarefa.aceitaComentarios()) throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário não aceita comentário (?)");
+            if (!formTarefa.aceitaComentarios())
+                throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário não aceita comentário (?)");
             //Requer resposta, mas não tem resposta
-            if(formTarefa.respostaObrigatoria() && (formTarefa.getResposta() == null || formTarefa.getResposta() == "")) throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário preenchido incorretamente");
+            if (formTarefa.respostaObrigatoria() && (formTarefa.getResposta() == null || formTarefa.getResposta() == ""))
+                throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário preenchido incorretamente");
             //Não aceita resposta, mas tem resposta
-            if(!formTarefa.aceitaResposta() && (formTarefa.getResposta() != "" && formTarefa.getResposta() != null)) throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário preenchido incorretamente");
+            if (!formTarefa.aceitaResposta() && (formTarefa.getResposta() != "" && formTarefa.getResposta() != null))
+                throw new ExcecaoSIGAA("disciplinaEnviarTarefa() formulário preenchido incorretamente");
 
             // MultipartBody pro envio da tarefa
             //TODO: Body que envia campo de resposta
@@ -428,13 +479,15 @@ public class Sessao {
                     .build();
             //TODO: preciso .addInterceptor() pra retentar as que falham, tipo disciplina e conexao lenta
             Response responseEnvioTarefa = client.newCall(requestEnvioTarefa).execute();
-            if (!respostaValida(responseEnvioTarefa)) throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() resposta inválida / SIGAA em manutenção");
+            if (!respostaValida(responseEnvioTarefa))
+                throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() resposta inválida / SIGAA em manutenção");
 
             //Confirmação de envio
             Document docEnvio = Jsoup.parse(responseEnvioTarefa.body().string());
-            if(!usuarioLogado(docEnvio)) throw new ExcecaoSessaoExpirada("disciplinaAcessarBotaoMenu() sessão expirada");
+            if (!usuarioLogado(docEnvio))
+                throw new ExcecaoSessaoExpirada("disciplinaAcessarBotaoMenu() sessão expirada");
 
-            if(docEnvio.getElementsByClass("info").size() > 0 && docEnvio.getElementsByClass("info").first().children().size() > 0 && docEnvio.getElementsByClass("info").first().children().first().text().equals("Operação realizada com sucesso!")) {
+            if (docEnvio.getElementsByClass("info").size() > 0 && docEnvio.getElementsByClass("info").first().children().size() > 0 && docEnvio.getElementsByClass("info").first().children().first().text().equals("Operação realizada com sucesso!")) {
                 System.out.println(logMSG + "disciplinaEnviarTarefa() Identificou confirmação de envio. Tarefa enviada com sucesso");
                 return true;
             } else {
@@ -449,7 +502,8 @@ public class Sessao {
     public EnvioTarefa disciplinaPegarEnvioTarefa(Tarefa t) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
         //Acessar página de tarefas
         Document docTarefas = disciplinaAcessarBotaoMenu(t.getDisciplina(), idBotaoDocumento.DISC_VER_TAREFAS);
-        if(!usuarioLogado(docTarefas)) throw new ExcecaoSessaoExpirada("disciplinaPegarEnvioTarefa() sessão expirada");
+        if (!usuarioLogado(docTarefas))
+            throw new ExcecaoSessaoExpirada("disciplinaPegarEnvioTarefa() sessão expirada");
 
         //Body para ver o envio
         FormBody body_envioTarefa = new FormBody.Builder()
@@ -461,15 +515,17 @@ public class Sessao {
 
         try {
             Response responseEnvioTarefa = post("/sigaa/ava/TarefaTurma/listar.jsf", body_envioTarefa);
-            if (!respostaValida(responseEnvioTarefa)) throw new ExcecaoSIGAA("disciplinaPegarEnvioTarefa() resposta inválida / SIGAA em manutenção");
+            if (!respostaValida(responseEnvioTarefa))
+                throw new ExcecaoSIGAA("disciplinaPegarEnvioTarefa() resposta inválida / SIGAA em manutenção");
 
             Document docEnvioTarefa = Jsoup.parse(responseEnvioTarefa.body().string());
-            if(!usuarioLogado(docEnvioTarefa)) throw new ExcecaoSessaoExpirada("disciplinaPegarEnvioTarefa() sessão expirada");
+            if (!usuarioLogado(docEnvioTarefa))
+                throw new ExcecaoSessaoExpirada("disciplinaPegarEnvioTarefa() sessão expirada");
 
             return Parsers.paginaTarefaEnvioTarefa(docEnvioTarefa, t, url_base);
 
         } catch (IOException e) {
-        throw new ExcecaoConexao("disciplinaPegarEnvioTarefa() IOException");
+            throw new ExcecaoConexao("disciplinaPegarEnvioTarefa() IOException");
         }
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
