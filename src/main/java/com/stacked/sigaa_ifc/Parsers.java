@@ -1,13 +1,15 @@
 package com.stacked.sigaa_ifc;
 
+import android.icu.text.IDNA;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 import okhttp3.FormBody;
@@ -83,6 +85,7 @@ public class Parsers {
             switch (l.get(i).text()) {
                 //TODO: Parsar outros valores aqui (participantes, foruns, noticias, frequencia, avaliaccoes, tarefas, questionarios)
                 //TODO 2: da pra  fazer em uma so funcao pra todos e so conferir o nome. Arrumar isso
+                // 26/03/2021 e eu continuo com isso assim. nada é mais permanente do que uma solução temporária
                 case "Ver Notas":
                     String[] v = {"", ""};
                     for (String a : l.get(i).parent().outerHtml().split("'")) {
@@ -130,6 +133,18 @@ public class Parsers {
                     }
                     String[][] avl = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, av};
                     botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_VER_AVALIACOES, avl));
+                    break;
+
+                case "Arquivos":
+                    String[] aq = {"", ""};
+                    for (String a : l.get(i).parent().outerHtml().split("'")) {
+                        if (a.startsWith("formMenu:j_id_jsp_")) {
+                            if (aq[0] == "") aq[0] = a;
+                            else aq[1] = a;
+                        }
+                    }
+                    String[][] aql = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, aq};
+                    botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_ARQUIVOS, aql));
                     break;
             }
         }
@@ -508,4 +523,83 @@ public class Parsers {
         }
         return turmasVirtuais;
     }
+
+    static protected ArrayList<Aula> paginaDisciplinaAulas(Document d, Disciplina disciplina) {
+        ArrayList<Aula> aulas = new ArrayList<>();
+
+        Elements topicosAula = d.getElementsByClass("topico-aula");
+        for(Element topico : topicosAula) {
+            String titulo = topico.getElementsByClass("titulo").get(0).text();
+            Element conteudo = topico.getElementsByClass("conteudotopico").get(0);
+
+            Elements anexos = conteudo.getElementsByClass("item");
+            for(Element e : conteudo.getElementsByClass("item")) {
+                e.parent().remove();
+            }
+
+            Aula aula = new Aula(disciplina, titulo, conteudo.html());
+            //TODO: Anexos
+            for(Element a : anexos) {
+                int tipo = -1;
+                //Identificar tipo. Não é a melhor maneira pra organizar isso, mas funciona. Vou adicionar um por um em vez de somente os de tarefas, fórum e questionário pra garantir que não vai acontecer algo muito inesperado
+                String[] iconeArquivos = {"/sigaa/img/porta_arquivos/icones/zip.png","/sigaa/img/porta_arquivos/icones/pdf.png","/sigaa/img/porta_arquivos/icones/ppt.png", "/sigaa/img/porta_arquivos/icones/doc.png", "/sigaa/img/porta_arquivos/icones/html.png", "/sigaa/img/porta_arquivos/icones/imagem.png", "/sigaa/img/porta_arquivos/icones/txt.png", "/sigaa/img/porta_arquivos/icones/desconhecido.png"};
+                String[] iconeHref = {"/sigaa/img/portal_turma/site_add.png", "/sigaa/img/portal_turma/video.png"};
+
+                for(Element img : a.getElementsByTag("img")) {
+                    if(img.attr("src").equals("/sigaa/img/indicator.gif")) continue;
+
+                    if(Arrays.asList(iconeArquivos).contains(img.attr("src"))) {
+                        //(download de um arquivo apos request)
+                        aula.adicionarAnexo(new AnexoInfoArquivo(aula, a.text(), a.getElementsByTag("a").get(0).attr("onclick").split("'")[5], a.getElementsByTag("a").get(0).attr("onclick").split("'")[11]));
+                    } else if(Arrays.asList(iconeHref).contains(img.attr("src"))) {
+                        //(abre algum url)
+                        if(a.getElementsByTag("iframe").size() > 0) {
+                            //VIDEO EMBED
+                            aula.adicionarAnexo(new AnexoSite(aula, a.getElementsByTag("h1").get(0).text(), a.getElementsByTag("iframe").get(0).attr("src")));
+                        } else {
+                            //LINK
+                            aula.adicionarAnexo(new AnexoSite(aula, a.getElementsByTag("a").get(0).text(), a.getElementsByTag("a").get(0).attr("href")));
+                        }
+                    } else if(img.attr("src").equals("/sigaa/img/porta_arquivos/icones/tarefa.png")) {
+                        System.out.println(Sessao.logMSG + "Tarefa");
+                        //(abre a pagina da tarefa)
+                        /////////////
+                    } else if(img.attr("src").equals("/sigaa/ava/img/questionario.png")) {
+                        System.out.println(Sessao.logMSG + "Questionario");
+                        //(abre o questionario)
+                        /////////////todo
+                    } else if(img.attr("src").equals("/sigaa/ava/img/forumava.png")) {
+                        System.out.println(Sessao.logMSG + "Fórum");
+                        //(abre o forum)
+                        /////////////todo
+                    } else if(img.attr("src").equals("/sigaa/img/porta_arquivos/icones/conteudo.png")) {
+                        //(abre a pagina visualização de conteudo na turma vritual)
+                        /////////////todo
+                        System.out.println(Sessao.logMSG + "Conteúdo");
+                    } else {
+                        //desconhecido
+                        System.out.println(Sessao.logMSG + "Desconhecido> " + img.attr("src"));
+                    }
+                    //
+                    //
+                }
+            }
+
+            aulas.add(aula);
+        }
+
+        return aulas;
+    }
+
+    static protected ArrayList<InfoArquivo> paginaDisciplinaArquivos(Document d, Disciplina disciplina) {
+        ArrayList<InfoArquivo> infosArquivo = new ArrayList<>();
+
+        for(Element linha : d.getElementsByClass("listing").get(0).getElementsByTag("tbody").get(0).getElementsByTag("tr")) {
+            infosArquivo.add(new InfoArquivo(disciplina, linha.getElementsByTag("td").get(0).text(), linha.getElementsByTag("a").get(0).attr("onclick").split("'")[5], linha.getElementsByTag("a").get(0).attr("onclick").split("'")[11]));
+        }
+
+        return infosArquivo;
+    }
+
+
 }

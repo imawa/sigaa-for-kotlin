@@ -117,7 +117,7 @@ public class Sessao {
     Loga a sessão e um usuário não completo (com os dados disponíveis na página principal) se logar corretamente. Retorna null se acontecer algum erro
     */
     //TODO Tenho que limpar esse código. Principalmente pular mais de 1 aviso
-    public Usuario login(final String usuario, final String senha) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public Usuario login(final String usuario, final String senha) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         try {
             //JSESSIONID
             JSESSIONID = null;
@@ -189,13 +189,14 @@ public class Sessao {
             usuarioSalvo = Parsers.mainPageDadosUsuario(docRespostaLogin, url_base, usuario);
             return usuarioSalvo;
         } catch (IOException e) {
-            throw new ExcecaoConexao("login() IOException");
+            e.printStackTrace();
+            throw new ExcecaoAPI("login() IOException");
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public ArrayList<Disciplina> pegarTodasDisciplinas() throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public ArrayList<Disciplina> pegarTodasDisciplinas() throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         try {
             final Response responsePgTurmas = get("/sigaa/portais/discente/turmas.jsf");
             if (!respostaValida(responsePgTurmas))
@@ -206,14 +207,15 @@ public class Sessao {
 
             return Parsers.todasTurmasVirtuais(docTurmas);
         } catch (IOException e) {
-            throw new ExcecaoConexao("obterTodasDisciplinas() IOException");
+            e.printStackTrace();
+            throw new ExcecaoAPI("obterTodasDisciplinas() IOException");
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //O método para acessar uma turma da página principal é diferente de uma da página com todas as turmas
-    private Document acessarPaginaTurmaVirtual(Disciplina d) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    private Document acessarPaginaTurmaVirtual(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (d == null) return null;
 
         try {
@@ -247,9 +249,13 @@ public class Sessao {
             if (!respostaValida(R))
                 throw new ExcecaoSIGAA("acessarPaginaTurmaVirtual() resposta invalida / SIGAA em manutenção");
 
-            return Jsoup.parse(R.body().string());
+            Document pgDisciplina = Jsoup.parse(R.body().string());
+            if (!usuarioLogado(pgDisciplina)) throw new ExcecaoSessaoExpirada("sessão expirada");
+
+            return pgDisciplina;
         } catch (IOException e) {
-            throw new ExcecaoConexao("acessarPaginaTurmaVirtual() IOException");
+            e.printStackTrace();
+            throw new ExcecaoAPI("acessarPaginaTurmaVirtual() IOException");
         }
     }
 
@@ -264,11 +270,11 @@ public class Sessao {
         return usuarioSalvo.botao(id);
     }
 
-    private Document disciplinaAcessarBotaoMenu(Disciplina d, idBotaoDocumento bt) throws ExcecaoConexao, ExcecaoSIGAA, ExcecaoSessaoExpirada {
+    private Document disciplinaAcessarBotaoMenu(Disciplina d, idBotaoDocumento bt) throws ExcecaoAPI, ExcecaoSIGAA, ExcecaoSessaoExpirada {
         return disciplinaAcessarBotaoMenu(d, bt, true);
     }
 
-    private Document disciplinaAcessarBotaoMenu(Disciplina d, idBotaoDocumento bt, boolean conferirSessao) throws ExcecaoConexao, ExcecaoSIGAA, ExcecaoSessaoExpirada {
+    private Document disciplinaAcessarBotaoMenu(Disciplina d, idBotaoDocumento bt, boolean conferirSessao) throws ExcecaoAPI, ExcecaoSIGAA, ExcecaoSessaoExpirada {
         if (d == null) return null;
 
         Document pgDisciplina = acessarPaginaTurmaVirtual(d);
@@ -302,33 +308,48 @@ public class Sessao {
 
             return docPgBotao;
         } catch (IOException e) {
-            throw new ExcecaoConexao("disciplinaAcessarBotaoMenu() IOException");
+            e.printStackTrace();
+            throw new ExcecaoAPI("disciplinaAcessarBotaoMenu() IOException");
         }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public ArrayList<Usuario> disciplinaPegarParticipantes(Disciplina d) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public ArrayList<Aula> disciplinaPegarAulas(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+        if (d == null) return new ArrayList<>();
+
+        Document pgDisciplina = acessarPaginaTurmaVirtual(d);
+        return Parsers.paginaDisciplinaAulas(pgDisciplina, d);
+    }
+
+    public ArrayList<Usuario> disciplinaPegarParticipantes(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (d == null) return new ArrayList<>();
 
         Document docParticipantes = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_PARTICIPANTES);
         return Parsers.paginaDisciplinaParticipantes(docParticipantes, url_base);
     }
 
-    public ArrayList<Nota> disciplinaPegarNotas(Disciplina d) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public ArrayList<Nota> disciplinaPegarNotas(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (d == null) return new ArrayList<>();
 
         Document docNotas = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_VER_NOTAS, false);
         return Parsers.paginaNotasDisciplinaNotas(docNotas, d);
     }
 
-    public ArrayList<Avaliacao> disciplinaPegarAvaliacoes(Disciplina d) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public ArrayList<InfoArquivo> disciplinaPegarListaArquivos(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+        if (d == null) return new ArrayList<>();
+
+        Document docArquivos = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_ARQUIVOS);
+        return Parsers.paginaDisciplinaArquivos(docArquivos, d);
+    }
+
+    public ArrayList<Avaliacao> disciplinaPegarAvaliacoes(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (d == null) return new ArrayList<>();
 
         Document docAvaliacoes = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_VER_AVALIACOES);
         return Parsers.paginaDisciplinaAvaliacoes(docAvaliacoes, d);
     }
 
-    public ArrayList<Tarefa> disciplinaPegarTarefas(Disciplina d) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public ArrayList<Tarefa> disciplinaPegarTarefas(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (d == null) return new ArrayList<>();
 
         Document docTarefas = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_VER_TAREFAS);
@@ -336,7 +357,7 @@ public class Sessao {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private Response disciplinaAbrirEnvioTarefa(Tarefa tarefa) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    private Response disciplinaAbrirEnvioTarefa(Tarefa tarefa) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (tarefa == null || !tarefa.enviavel()) return null;
 
         try {
@@ -366,12 +387,13 @@ public class Sessao {
                 return null;
             }
         } catch (IOException e) {
-            throw new ExcecaoConexao("disciplinaAcessarBotaoMenu() IOException");
+            e.printStackTrace();
+            throw new ExcecaoAPI("disciplinaAcessarBotaoMenu() IOException");
         }
     }
 
     //Obtem o form de uma tarefa, que é usado pra enviar a tarefa
-    public FormTarefa disciplinaObterFormTarefa(Tarefa tarefa) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public FormTarefa disciplinaObterFormTarefa(Tarefa tarefa) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (tarefa == null || !tarefa.enviavel()) return null;
 
         Response respostaPgTarefa = disciplinaAbrirEnvioTarefa(tarefa);
@@ -419,12 +441,12 @@ public class Sessao {
             ////////////////////////////////////////////////////////
             return new FormTarefa(tarefa, j_id_jsp, infoEscondidaForm, input_comentarios, input_arquivo, input_arquivo_obrigatorio, false, false); //TODO: campo de resposta
         } catch (IOException e) {
-            throw new ExcecaoConexao("disciplinaObterFormTarefa() IOException ");
+            throw new ExcecaoAPI("disciplinaObterFormTarefa() IOException ");
         }
     }
 
     //TODO: Testar. Não cheguei a testar essa função após a limpeza do código
-    public boolean disciplinaEnviarTarefa(FormTarefa formTarefa) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public boolean disciplinaEnviarTarefa(FormTarefa formTarefa) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (formTarefa.getTarefa() == null || !formTarefa.getTarefa().enviavel()) return false;
 
         Response responsePgTarefa = disciplinaAbrirEnvioTarefa(formTarefa.getTarefa());
@@ -495,11 +517,12 @@ public class Sessao {
                 return false;
             }
         } catch (IOException e) {
-            throw new ExcecaoConexao("disciplinaEnviarTarefa() IOException");
+            e.printStackTrace();
+            throw new ExcecaoAPI("disciplinaEnviarTarefa() IOException");
         }
     }
 
-    public EnvioTarefa disciplinaPegarEnvioTarefa(Tarefa t) throws ExcecaoSIGAA, ExcecaoConexao, ExcecaoSessaoExpirada {
+    public EnvioTarefa disciplinaPegarEnvioTarefa(Tarefa t) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         //Acessar página de tarefas
         Document docTarefas = disciplinaAcessarBotaoMenu(t.getDisciplina(), idBotaoDocumento.DISC_VER_TAREFAS);
         if (!usuarioLogado(docTarefas))
@@ -525,11 +548,64 @@ public class Sessao {
             return Parsers.paginaTarefaEnvioTarefa(docEnvioTarefa, t, url_base);
 
         } catch (IOException e) {
-            throw new ExcecaoConexao("disciplinaPegarEnvioTarefa() IOException");
+            e.printStackTrace();
+            throw new ExcecaoAPI("disciplinaPegarEnvioTarefa() IOException");
         }
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public Arquivo disciplinaBaixarArquivo(InfoArquivo a) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+        if (a == null) return null;
 
+        Document docArquivos = disciplinaAcessarBotaoMenu(a.getDisciplina(), idBotaoDocumento.DISC_ARQUIVOS);
+
+        FormBody bodyAq = new FormBody.Builder()
+                .add("formAva", "formAva")
+                .add("javax.faces.ViewState", javaxViewState(docArquivos))
+                .add(a.getJ_id_jsp(), a.getJ_id_jsp())
+                .add("id", a.getId())
+                .build();
+
+        try {
+            Response responseArquivo = post("/sigaa/ava/ArquivoTurma/listar_discente.jsf", bodyAq);
+
+            String nomeArquivo = responseArquivo.header("Content-Disposition").split("filename=\"")[1];
+            nomeArquivo = nomeArquivo.substring(0, nomeArquivo.length()-1);
+            System.out.println(logMSG + nomeArquivo);
+
+            return new Arquivo(nomeArquivo, responseArquivo.body().byteStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ExcecaoAPI("disciplinaBaixarArquivo() IOException");
+        }
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Funções de tarefa, arquivo, etc. pra anexos
+    public Arquivo disciplinaBaixarArquivo(AnexoInfoArquivo a) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+        if (a == null) return null;
+
+        Document pgDisciplina = acessarPaginaTurmaVirtual(a.getAula().getDisciplina());
+
+        FormBody bodyAq = new FormBody.Builder()
+                .add("formAva", "formAva")
+                .add("formAva:idTopicoSelecionado", pgDisciplina.getElementById("formAva:idTopicoSelecionado").attr("value"))
+                .add("javax.faces.ViewState", javaxViewState(pgDisciplina))
+                .add(a.getJ_id_jsp(), a.getJ_id_jsp())
+                .add("id", a.getId())
+                .build();
+
+        try {
+            Response responseArquivo = post("/sigaa/ava/index.jsf", bodyAq);
+
+            String nomeArquivo = responseArquivo.header("Content-Disposition").split("filename=\"")[1];
+            nomeArquivo = nomeArquivo.substring(0, nomeArquivo.length()-1);
+            System.out.println(logMSG + nomeArquivo);
+
+            return new Arquivo(nomeArquivo, responseArquivo.body().byteStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ExcecaoAPI("disciplinaBaixarArquivo() IOException");
+        }
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
