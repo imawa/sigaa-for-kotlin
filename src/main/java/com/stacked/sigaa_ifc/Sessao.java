@@ -5,6 +5,7 @@ import okhttp3.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -570,9 +571,9 @@ public class Sessao {
 
             String nomeArquivo = responseArquivo.header("Content-Disposition").split("filename=\"")[1];
             nomeArquivo = nomeArquivo.substring(0, nomeArquivo.length()-1);
-            System.out.println(logMSG + nomeArquivo);
+            byte[] bytes = IOUtils.toByteArray(responseArquivo.body().byteStream());
 
-            return new Arquivo(nomeArquivo, responseArquivo.body().byteStream());
+            return new Arquivo(nomeArquivo, bytes);
         } catch (IOException e) {
             e.printStackTrace();
             throw new ExcecaoAPI("disciplinaBaixarArquivo() IOException");
@@ -598,9 +599,9 @@ public class Sessao {
 
             String nomeArquivo = responseArquivo.header("Content-Disposition").split("filename=\"")[1];
             nomeArquivo = nomeArquivo.substring(0, nomeArquivo.length()-1);
-            System.out.println(logMSG + nomeArquivo);
+            byte[] bytes = IOUtils.toByteArray(responseArquivo.body().byteStream());
 
-            return new Arquivo(nomeArquivo, responseArquivo.body().byteStream());
+            return new Arquivo(nomeArquivo, bytes);
         } catch (IOException e) {
             e.printStackTrace();
             throw new ExcecaoAPI("disciplinaBaixarArquivo() IOException");

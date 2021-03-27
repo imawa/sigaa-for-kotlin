@@ -4,13 +4,13 @@ import java.io.InputStream;
 
 public class Arquivo {
     private String nome;
-    private InputStream byteStream;
+    private byte[] bytes;
 
-    Arquivo(String nome, InputStream byteStream) {
+    Arquivo(String nome, byte[] bytes) {
         this.nome = nome;
-        this.byteStream = byteStream;
+        this.bytes = bytes;
     }
 
     public String getNome() {return nome;}
-    public InputStream getByteStream() {return byteStream;}
+    public byte[] getBytes() {return bytes;}
 }

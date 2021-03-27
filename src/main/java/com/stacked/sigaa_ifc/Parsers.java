@@ -1,7 +1,5 @@
 package com.stacked.sigaa_ifc;
 
-import android.icu.text.IDNA;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -540,8 +538,6 @@ public class Parsers {
             Aula aula = new Aula(disciplina, titulo, conteudo.html());
             //TODO: Anexos
             for(Element a : anexos) {
-                int tipo = -1;
-                //Identificar tipo. Não é a melhor maneira pra organizar isso, mas funciona. Vou adicionar um por um em vez de somente os de tarefas, fórum e questionário pra garantir que não vai acontecer algo muito inesperado
                 String[] iconeArquivos = {"/sigaa/img/porta_arquivos/icones/zip.png","/sigaa/img/porta_arquivos/icones/pdf.png","/sigaa/img/porta_arquivos/icones/ppt.png", "/sigaa/img/porta_arquivos/icones/doc.png", "/sigaa/img/porta_arquivos/icones/html.png", "/sigaa/img/porta_arquivos/icones/imagem.png", "/sigaa/img/porta_arquivos/icones/txt.png", "/sigaa/img/porta_arquivos/icones/desconhecido.png"};
                 String[] iconeHref = {"/sigaa/img/portal_turma/site_add.png", "/sigaa/img/portal_turma/video.png"};
 
