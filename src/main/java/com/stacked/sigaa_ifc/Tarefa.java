@@ -50,6 +50,7 @@ public class Tarefa {
     void definirIdEnvio(String id) { j_idEnviar = id; }
     void definirIdVisualizacao(String id) { j_idVisualizar = id; }
     void definirUrlArquivo(String dir) { urlDownload = dir; }
+    void definirId(String id) { this.id = id; }
 
     private String id, j_id, j_idEnviar, j_idVisualizar;
     String getId() { return id; }

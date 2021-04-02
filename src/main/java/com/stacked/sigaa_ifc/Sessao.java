@@ -356,8 +356,7 @@ public class Sessao {
         Document docTarefas = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_VER_TAREFAS);
         return Parsers.paginaTarefasDisciplinaTarefas(docTarefas, url_base, d);
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private Response disciplinaAbrirEnvioTarefa(Tarefa tarefa) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (tarefa == null || !tarefa.enviavel()) return null;
 
@@ -384,8 +383,17 @@ public class Sessao {
                 return post("/sigaa/portais/discente/discente.jsf#", bodyTarefa);
             } else {
                 // [2] Método lento (usado pras disciplinas não visíveis na principal): página principal -> página turma virtual -> página tarefas -> página tarefas
-                //TODO
-                return null;
+                //TODO: Quando tiver oportunidade, conferir se isso realmente funciona
+                Document docTarefas = disciplinaAcessarBotaoMenu(tarefa.getDisciplina(), idBotaoDocumento.DISC_VER_TAREFAS);
+
+                FormBody bodyTarefa = new FormBody.Builder()
+                        .add(tarefa.postArgsEnviar()[0], tarefa.postArgsEnviar()[0])
+                        .add("javax.faces.ViewState", javaxViewState(docTarefas))
+                        .add(tarefa.postArgsEnviar()[1], tarefa.postArgsEnviar()[1])
+                        .add("id", tarefa.getId())
+                        .build();
+
+                return post("/sigaa/portais/discente/discente.jsf#", bodyTarefa);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -552,6 +560,28 @@ public class Sessao {
             e.printStackTrace();
             throw new ExcecaoAPI("disciplinaPegarEnvioTarefa() IOException");
         }
+    }
+
+    //TODO  Transforma o AnexoTarefa em Tarefa. Isso aqui tá horrivel. Atualmente essa foi a solução mais fácil pra não precisar modificar o resto do código. A solução que envolve mudar o código provavelmente vai ser armazenando somente o id da tarefa e fazendo o processo a partir somente dele
+    //      2: acho que eu poderia deixar essa mesmo caso a api guarde e ultilize da ultima pagina pra acelerar as coisas. aí não perderia muito tempo no final
+    public Tarefa disciplinaPegarTarefa(AnexoTarefa tarefa) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+        Document docTarefas = disciplinaAcessarBotaoMenu(tarefa.getAula().getDisciplina(), idBotaoDocumento.DISC_VER_TAREFAS);
+
+        ArrayList<Tarefa> tarefas = Parsers.paginaTarefasDisciplinaTarefas(docTarefas, url_base, tarefa.getAula().getDisciplina());
+
+        if(tarefas.size() > 0) {
+            //Conferir pelo id
+            for(Tarefa t : tarefas) {
+                if(t.getId().equals(tarefa.getId())) return t;
+            }
+
+            //Conferir pelo titulo (quando a tarefa não é enviável). Há chance de não ser a mesma, mas a tarefa já não é enviável de qualquer maneira aqui
+            for(Tarefa t : tarefas) {
+                if(t.getTitulo().equals(tarefa.getTitulo())) return t;
+            }
+        }
+
+        throw new ExcecaoSIGAA("disciplinaPegarTarefa() Tarefa inexistente");
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public Arquivo disciplinaBaixarArquivo(InfoArquivo a) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {

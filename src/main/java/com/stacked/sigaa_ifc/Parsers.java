@@ -13,6 +13,13 @@ import java.util.Date;
 import okhttp3.FormBody;
 
 public class Parsers {
+    /*
+
+    Esse arquivo tá uma bagunça. O importante é que tá funcional (por enquanto)
+
+    Se eu não tiver coisa melhor pra fazer, talvez eu arrume algum dia
+
+     */
     //**0** ETC
     static protected FormBody paginaAvisoSkipBody(Document d) {
         Element btContinuar = null;
@@ -390,6 +397,8 @@ public class Parsers {
                     String titulo = linhaInformacao.children().get(1).text();
                     int envios = Integer.parseInt(linhaInformacao.children().get(4).text());
 
+                    //System.out.println(Sessao.logMSG + titulo);
+
                     String[] datas = linhaInformacao.children().get(2).text().replace("h", ":").split(" ");
                     Date inicio = new Date();
                     Date fim = new Date();
@@ -400,8 +409,8 @@ public class Parsers {
 
                     String id = "", j_id = "", j_idEnviar = "", j_idVisualizar = "";
                     boolean enviavel = (inicio.compareTo(new Date()) * new Date().compareTo(fim) > 0) && (linhaInformacao.children().get(5).children().size() == 1);
-                    if(enviavel) {
-                        System.out.println("\n");
+                    if(linhaInformacao.children().get(5).children().size() == 1) {
+                     //   System.out.println("\n");
                         String[] x = linhaInformacao.children().get(5).children().get(0).attr("onclick").split("'");
 
                         id = x[11];
@@ -437,6 +446,8 @@ public class Parsers {
                     if(enviavel || enviada) t.definirIds(id, j_id);
                     if(enviavel) t.definirIdEnvio(j_idEnviar);
                     if(enviada) t.definirIdVisualizacao(j_idVisualizar);
+
+                    t.definirId(id);//////
 
                     tarefas.add(t);
                 }
@@ -557,24 +568,61 @@ public class Parsers {
                             aula.adicionarAnexo(new AnexoSite(aula, a.getElementsByTag("a").get(0).text(), a.getElementsByTag("a").get(0).attr("href")));
                         }
                     } else if(img.attr("src").equals("/sigaa/img/porta_arquivos/icones/tarefa.png")) {
-                        System.out.println(Sessao.logMSG + "Tarefa");
+                        //System.out.println(Sessao.logMSG + "Tarefa");
                         //(abre a pagina da tarefa)
-                        /////////////
+
+                        //Inicia em 09/02/2021 às 0h 0 e finaliza em 25/02/2021 às 23h 59
+                        //Inicia em 07/03/2021 às 0h 0 e finaliza em 10/03/2021 às 23h 59
+                        String[] datas = a.getElementsByClass("descricao-item").get(0).text().split(" ");
+                        Date inicio = new Date();
+                        Date fim = new Date();
+                        try {
+                            //public static SimpleDateFormat formato_data = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                            String sInicio = (datas[2] + " " + "000".substring(datas[4].replace("h", ":").length()) +  datas[4].replace("h", ":") + "00".substring(datas[5].length()) + datas[5]);
+                            String sFim = (datas[9] + " " + "000".substring(datas[11].replace("h", ":").length()) + datas[11].replace("h", ":") + "00".substring(datas[12].length()) + datas[12]);
+
+                            inicio = AnexoTarefa.formato_data.parse(sInicio);
+                            fim = AnexoTarefa.formato_data.parse(sFim);
+                        } catch (ParseException e) {e.printStackTrace();}
+                        boolean enviavel = (inicio.compareTo(new Date()) * new Date().compareTo(fim) > 0);
+
+                        Element elA = a.getElementsByTag("a").get(0);
+                        String tituloAnexo = elA.text();
+                        String id = elA.attr("onclick").split("'")[11];
+
+                        aula.adicionarAnexo(new AnexoTarefa(aula, tituloAnexo, id, inicio, fim, enviavel));
                     } else if(img.attr("src").equals("/sigaa/ava/img/questionario.png")) {
-                        System.out.println(Sessao.logMSG + "Questionario");
+                        System.out.println(Sessao.logMSG + "Anexo não implementado: questionario");
                         //(abre o questionario)
-                        /////////////todo
+                        /////////////todo 1
+                        Element elA = a.getElementsByTag("a").get(0);
+                        String tituloAnexo = elA.text();
+
+                        aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
                     } else if(img.attr("src").equals("/sigaa/ava/img/forumava.png")) {
-                        System.out.println(Sessao.logMSG + "Fórum");
+                        System.out.println(Sessao.logMSG + "Anexo não implementado: fórum");
                         //(abre o forum)
-                        /////////////todo
+                        /////////////todo 3
+                        Element elA = a.getElementsByTag("a").get(0);
+                        String tituloAnexo = elA.text();
+
+                        aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
                     } else if(img.attr("src").equals("/sigaa/img/porta_arquivos/icones/conteudo.png")) {
+                        System.out.println(Sessao.logMSG + "Anexo não implementado: conteúdo");
                         //(abre a pagina visualização de conteudo na turma vritual)
-                        /////////////todo
-                        System.out.println(Sessao.logMSG + "Conteúdo");
+                        /////////////todo 2
+                        Element elA = a.getElementsByTag("a").get(0);
+                        String tituloAnexo = elA.text();
+
+                        aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
                     } else {
                         //desconhecido
-                        System.out.println(Sessao.logMSG + "Desconhecido> " + img.attr("src"));
+                        System.out.println(Sessao.logMSG + "Anexo desconhecido: " + img.attr("src"));
+
+                        Element elA = a.getElementsByTag("a").get(0);
+                        String tituloAnexo = elA.text();
+
+                        aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
                     }
                     //
                     //
