@@ -85,9 +85,9 @@ public class Sessao {
 
     private boolean usuarioLogado(Document d, boolean conferirNome) {
         if (conferirNome) {
-            if (d.getElementsByClass("usuario").size() > 0 && d.getElementsByClass("usuario").get(0).text().equals(usuarioSalvo.getNome()))
+            if (d.getElementsByClass("usuario").size() > 0 && (d.getElementsByClass("usuario").get(0).text().equals(usuarioSalvo.getNome()) || d.getElementsByClass("usuario").get(0).text().equals(usuarioSalvo.getNomeAbreviado())))
                 return true;
-            if (d.getElementById("painelDadosUsuario") != null && d.getElementById("painelDadosUsuario").text().contains(usuarioSalvo.getNome()))
+            if (d.getElementById("painelDadosUsuario") != null && (d.getElementById("painelDadosUsuario").text().contains(usuarioSalvo.getNome()) || d.getElementById("painelDadosUsuario").text().contains(usuarioSalvo.getNomeAbreviado())))
                 return true;
         } else {
             if (d.getElementsByClass("usuario").size() > 0) return true;
@@ -181,8 +181,8 @@ public class Sessao {
                 if (!respostaValida(responsePaginaInicial))
                     throw new ExcecaoSIGAA("login() resposta inválida / SIGAA em manutenção");
 
-                Document docPgDiscente = Jsoup.parse(responsePaginaInicial.body().string());
-                if (!usuarioLogado(docPgDiscente, false))
+                docRespostaLogin = Jsoup.parse(responsePaginaInicial.body().string());
+                if (!usuarioLogado(docRespostaLogin, false))
                     throw new ExcecaoSessaoExpirada("login() não foi possível logar");
             }
 
@@ -213,6 +213,93 @@ public class Sessao {
         }
     }
 
+    public ArrayList<String> pegarListaPeriodosBoletim() throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+        ArrayList<String> periodos = new ArrayList<>();
+        try {
+            Response pgPrincipal = get("/sigaa/portais/discente/discente.jsf");
+            if (!respostaValida(pgPrincipal))
+                throw new ExcecaoSIGAA("pegarListaPeriodosBoletim() resposta inválida / SIGAA em manutenção");
+
+            Document docPrincipal = Jsoup.parse(pgPrincipal.body().string());
+            if (!usuarioLogado(docPrincipal)) throw new ExcecaoSessaoExpirada("sessão expirada");
+
+            Element menu_discente = docPrincipal.getElementById("menu:form_menu_discente");
+            String jscook_action = menu_discente.getElementsByTag("div").get(0).id();
+            jscook_action += ":A]#{ portalDiscente.emitirBoletim }";
+
+            final FormBody body_listaBoletins = new FormBody.Builder()
+                    .add("menu:form_menu_discente", "menu:form_menu_discente")
+                    .add("jscook_action", jscook_action)
+                    .add("javax.faces.ViewState", javaxViewState(docPrincipal))
+                    .build();
+
+            Response responseBoletins = post("/sigaa/portais/discente/discente.jsf", body_listaBoletins);
+            if (!respostaValida(pgPrincipal))
+                throw new ExcecaoSIGAA("pegarListaPeriodosBoletim() resposta inválida / SIGAA em manutenção");
+
+            Document docBoletins = Jsoup.parse(responseBoletins.body().string());
+            if (!usuarioLogado(docBoletins)) throw new ExcecaoSessaoExpirada("sessão expirada");
+
+            Element bodyTabela = docBoletins.getElementsByClass("listagem").get(0).getElementsByTag("tbody").get(0);
+            for(Element c : bodyTabela.children()) {
+                periodos.add(c.child(0).text());
+            }
+
+            return periodos;
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ExcecaoAPI("pegarListaPeriodosBoletim() IOException");
+        }
+    }
+
+    public String pegarBodyBoletim(String periodo) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+        try {
+            //Página principal
+            Response pgPrincipal = get("/sigaa/portais/discente/discente.jsf");
+            if (!respostaValida(pgPrincipal))
+                throw new ExcecaoSIGAA("pegarBodyBoletim() resposta inválida / SIGAA em manutenção");
+
+            Document docPrincipal = Jsoup.parse(pgPrincipal.body().string());
+            if (!usuarioLogado(docPrincipal)) throw new ExcecaoSessaoExpirada("sessão expirada");
+
+            //Página de boletins
+            Element menu_discente = docPrincipal.getElementById("menu:form_menu_discente");
+            String jscook_action = menu_discente.getElementsByTag("div").get(0).id();
+            jscook_action += ":A]#{ portalDiscente.emitirBoletim }";
+
+            final FormBody body_listaBoletins = new FormBody.Builder()
+                    .add("menu:form_menu_discente", "menu:form_menu_discente")
+                    .add("jscook_action", jscook_action)
+                    .add("javax.faces.ViewState", javaxViewState(docPrincipal))
+                    .build();
+
+            Response responseBoletins = post("/sigaa/portais/discente/discente.jsf", body_listaBoletins);
+            if (!respostaValida(pgPrincipal))
+                throw new ExcecaoSIGAA("pegarBodyBoletim() resposta inválida / SIGAA em manutenção");
+
+            Document docBoletins = Jsoup.parse(responseBoletins.body().string());
+            if (!usuarioLogado(docBoletins)) throw new ExcecaoSessaoExpirada("sessão expirada");
+
+            //Página do boletim em questão
+            String onClickBotaoBoletim = docBoletins.getElementsByClass("listagem").get(0).getElementsByTag("tbody").get(0).getElementsContainingText(periodo).get(1).getElementsByTag("a").get(0).attr("onclick");
+
+            final FormBody body_boletim = new FormBody.Builder()
+                    .add("form", "form")
+                    .add("javax.faces.ViewState", javaxViewState(docBoletins))
+                    .add(onClickBotaoBoletim.split("'")[5], onClickBotaoBoletim.split("'")[7])
+                    .add("anoEscolar", onClickBotaoBoletim.split("'")[11])
+                    .build();
+
+            Response responseBoletim = post("/sigaa/ensino/tecnico_integrado/boletim/selecao.jsf", body_boletim);
+            if (!respostaValida(responseBoletim))
+                throw new ExcecaoSIGAA("pegarBodyBoletim() resposta inválida / SIGAA em manutenção");
+
+            return responseBoletim.body().string();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ExcecaoAPI("pegarBodyBoletim() IOException");
+        }
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //O método para acessar uma turma da página principal é diferente de uma da página com todas as turmas

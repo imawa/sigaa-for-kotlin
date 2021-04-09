@@ -8,7 +8,7 @@ enum tipoUsuario {
 }
 
 public class Usuario {
-    private String nome, campus = "", email = "", urlAvatar, login;
+    private String nome, nomeAbreviado, campus = "", email = "", urlAvatar, login;
     private int matricula = 0;
     private ArrayList<Disciplina> disciplinasAtuais = new ArrayList<>();
     private ArrayList<BotaoDocumento> botoes = new ArrayList<>();
@@ -89,4 +89,7 @@ public class Usuario {
     void adicionarBotao(BotaoDocumento b) {
         botoes.add(b);
     }
+
+    void setNomeAbreviado(String nomeAbreviado) { this.nomeAbreviado = nomeAbreviado; }
+    String getNomeAbreviado() { return nomeAbreviado; }
 }

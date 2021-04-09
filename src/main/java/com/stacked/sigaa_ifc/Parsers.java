@@ -74,6 +74,10 @@ public class Parsers {
 
         Usuario u = new Usuario(tipoUsuario.DISCENTE, nome, login, campus, matricula, disciplinasAtuais, urlAvatar);
         u.adicionarBotao(meusDados);
+
+        final String nomeAbreviado = d.getElementsByClass("usuario").get(0).text();
+        u.setNomeAbreviado(nomeAbreviado);
+
         return u;
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
