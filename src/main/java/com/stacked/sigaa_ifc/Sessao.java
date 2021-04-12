@@ -13,6 +13,7 @@ import org.jsoup.nodes.Element;
 import okhttp3.FormBody;
 
 public class Sessao {
+    //TODO: Eu posso salvar a ultima página salva para acelerar tudo. Não precisaria ficar pegando a página inicial de uma disciplina toda vez que for ver cada coisa
     public static String logMSG = "Debug API: ";
     private String url_base;
     private OkHttpClient client;
@@ -61,7 +62,7 @@ public class Sessao {
                 .post(body)
                 .build();
 
-        //TODO: preciso .addInterceptor() pra retentar as que falham, tipo disciplina e conexao lenta
+        //TODO: preciso .addInterceptor() ?
 
         return client.newCall(request).execute();
     }
@@ -117,10 +118,9 @@ public class Sessao {
     login(usuario, senha);
     Loga a sessão e um usuário não completo (com os dados disponíveis na página principal) se logar corretamente. Retorna null se acontecer algum erro
     */
-    //TODO Tenho que limpar esse código. Principalmente pular mais de 1 aviso
     public Usuario login(final String usuario, final String senha) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         try {
-            //JSESSIONID
+            //JSESSIONID TODO: Acredito que dá para tirar isso aqui do JSESSIONID, enviar o post de logar direto e pegar o JSESSIONID depois
             JSESSIONID = null;
             Response responsePgLogin = get("/sigaa/verTelaLogin.do");
             if (!respostaValida(responsePgLogin))
@@ -595,7 +595,7 @@ public class Sessao {
                     .header("Cookie", "JSESSIONID=" + JSESSIONID)
                     .post(body_envioTarefa)
                     .build();
-            //TODO: preciso .addInterceptor() pra retentar as que falham, tipo disciplina e conexao lenta
+            //TODO: preciso .addInterceptor() ?
             Response responseEnvioTarefa = client.newCall(requestEnvioTarefa).execute();
             if (!respostaValida(responseEnvioTarefa))
                 throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() resposta inválida / SIGAA em manutenção");
@@ -696,8 +696,7 @@ public class Sessao {
             throw new ExcecaoAPI("disciplinaBaixarArquivo() IOException");
         }
     }
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Funções de tarefa, arquivo, etc. pra anexos
+    //Versão do anexo
     public Arquivo disciplinaBaixarArquivo(AnexoInfoArquivo a) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (a == null) return null;
 
