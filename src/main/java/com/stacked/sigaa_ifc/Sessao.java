@@ -409,7 +409,7 @@ public class Sessao {
         return Parsers.paginaDisciplinaAulas(pgDisciplina, d);
     }
 
-    public ArrayList<Usuario> disciplinaPegarParticipantes(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+    public ArrayList<Participante> disciplinaPegarParticipantes(Disciplina d) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         if (d == null) return new ArrayList<>();
 
         Document docParticipantes = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_PARTICIPANTES);

@@ -72,7 +72,7 @@ public class Parsers {
         final String j_id_jsp_meusDados = d.body().getElementsByAttributeValueContaining("id", "meusDadosPessoais").get(0).attr("id").split(":")[0];
         final BotaoDocumento meusDados = new BotaoDocumento(idBotaoDocumento.MAIN_MEUS_DADOS, new String[][]{{j_id_jsp_meusDados, j_id_jsp_meusDados}, {j_id_jsp_meusDados + ":meusDadosPessoais", j_id_jsp_meusDados + ":meusDadosPessoais"}});
 
-        Usuario u = new Usuario(tipoUsuario.DISCENTE, nome, login, campus, matricula, disciplinasAtuais, urlAvatar);
+        Usuario u = new Usuario(nome, login, campus, matricula, disciplinasAtuais, urlAvatar);
         u.adicionarBotao(meusDados);
 
         final String nomeAbreviado = d.getElementsByClass("usuario").get(0).text();
@@ -161,8 +161,8 @@ public class Parsers {
     }
 
     //Participantes
-    static protected ArrayList<Usuario> paginaDisciplinaParticipantes(Document d, String url_base) {
-        ArrayList<Usuario> usuarios = new ArrayList<>();
+    static protected ArrayList<Participante> paginaDisciplinaParticipantes(Document d, String url_base) {
+        ArrayList<Participante> participantes = new ArrayList<>();
         //fieldset em cima indicando docente ou discente (0 docente) (1 ddisente)
         //document.getElementsByClassName("participantes")
         /*
@@ -176,7 +176,7 @@ public class Parsers {
         Elements listaParticipantes = d.getElementsByClass("participantes");
 
         for(int listaP = 0; listaP < listaParticipantes.size(); listaP++) {
-            tipoUsuario tipo = (listaParticipantes.get(listaP).previousElementSibling().child(0).text().contains("Docente")) ? tipoUsuario.DOCENTE : tipoUsuario.DISCENTE;
+            int tipo = (listaParticipantes.get(listaP).previousElementSibling().child(0).text().contains("Docente")) ? 1 : 0;
 
             Element listaUsuarios = listaParticipantes.get(listaP).getElementsByTag("tbody").get(0);
             //Linhas (1-2 usuarios)
@@ -206,14 +206,14 @@ public class Parsers {
                             }
                         }
                         //System.out.println(Sessao.logMSG + tipo +" " + nome + " " + usuario + " " + email + " " + matricula);
-                        Usuario _u = new Usuario(tipo, nome, usuario, url_avatar, email);
+                        Participante _u = new Participante(tipo, nome, usuario, url_avatar, email);
                         if(matricula != 0) _u.definirMatricula(matricula); //Só discentes possuem matrícula aqui
-                        usuarios.add(_u);
+                        participantes.add(_u);
                     }
                 }
             }
         }
-        return usuarios;
+        return participantes;
     }
 
     //Pagina notas
