@@ -97,8 +97,8 @@ public class Sessao {
         return false;
     }
 
-    //confere a pagina inicial
-    public boolean usuarioLogado() {
+    //confere a pagina inicial (renomeei de usuarioLogado -> conferirUsuarioLogado para não confundir)
+    public boolean conferirUsuarioLogado() {
         try {
             Response r = get("/sigaa/portais/discente/discente.jsf");
             if (respostaValida(r)) {
@@ -118,7 +118,7 @@ public class Sessao {
     login(usuario, senha);
     Loga a sessão e um usuário não completo (com os dados disponíveis na página principal) se logar corretamente. Retorna null se acontecer algum erro
     */
-    public Usuario login(final String usuario, final String senha) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+    public boolean login(final String usuario, final String senha) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         try {
             //JSESSIONID TODO: Acredito que dá para tirar isso aqui do JSESSIONID, enviar o post de logar direto e pegar o JSESSIONID depois
             JSESSIONID = null;
@@ -145,10 +145,10 @@ public class Sessao {
             if (!respostaValida(responseLogin))
                 throw new ExcecaoSIGAA("login() resposta inválida / SIGAA em manutenção");
 
-            //Usuario ou senha incorretos (retorna null)
+            //Usuario ou senha incorretos (retorna false)
             if (responseLogin.priorResponse() == null) {
                 System.out.println(logMSG + "login() sem resposta -> usuário ou senha incorretos");
-                return null;
+                return false;
             }
 
 
@@ -188,13 +188,14 @@ public class Sessao {
 
             System.out.println(logMSG + "login() sem problemas");
             usuarioSalvo = Parsers.mainPageDadosUsuario(docRespostaLogin, url_base, usuario);
-            return usuarioSalvo;
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
             throw new ExcecaoAPI("login() IOException");
         }
     }
 
+    public Usuario getUsuario() { return usuarioSalvo; }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public ArrayList<Disciplina> pegarTodasDisciplinas() throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
