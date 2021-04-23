@@ -1,6 +1,8 @@
 package com.stacked.sigaa_ifc;
 
-public class Disciplina {
+import java.io.Serializable;
+
+public class Disciplina implements Serializable {
     private String id = null; //Somente as atuais possuem isso. É utilizado somente para abrir uma tarefa direto
     private String nome, periodo, form_acessarTurmaVirtual, form_acessarTurmaVirtual_full, frontEndIdTurma;
     private boolean paginaTodasTurmasVirtuais;

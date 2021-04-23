@@ -1,5 +1,7 @@
 package com.stacked.sigaa_ifc;
 
+import java.io.Serializable;
+
 enum idBotaoDocumento {
     MAIN_MEUS_DADOS,
     DISC_PARTICIPANTES,
@@ -9,7 +11,7 @@ enum idBotaoDocumento {
     DISC_VER_TAREFAS;
 }
 
-public class BotaoDocumento {
+public class BotaoDocumento implements Serializable {
     /*
         Em suma: cada botão que voce clica no SIGAA requer 4 valores únicos (2 pares) pra cada pessoa chamados de j_id_jsp_{numero}. O botão "Ver Notas", "Participantes" etc. de cada disciplina possui um valor diferente pra cada usuario
         Eu to usando essa classe pra armazenar os botoes de cada disciplina com um id pra identificar o que faz

@@ -26,6 +26,24 @@ public class Sessao {
         client = new OkHttpClient();
     }
 
+    public Sessao(PacoteSessao pacote) {
+        this.url_base = pacote.getUrl_base();
+        this.JSESSIONID = pacote.getJSESSIONID();
+        this.usuarioSalvo = pacote.getUsuario();
+        client = new OkHttpClient();
+    }
+
+    public PacoteSessao empacotarSessao() {
+        return new PacoteSessao(this);
+    }
+
+    protected String getJSESSIONID() {
+        return JSESSIONID;
+    }
+
+    String getUrl_base() {
+        return url_base;
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*
     javaxViewState(Document doc)

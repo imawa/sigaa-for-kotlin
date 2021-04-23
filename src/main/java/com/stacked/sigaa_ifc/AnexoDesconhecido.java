@@ -1,6 +1,8 @@
 package com.stacked.sigaa_ifc;
 
-public class AnexoDesconhecido extends Anexo {
+import java.io.Serializable;
+
+public class AnexoDesconhecido extends Anexo implements Serializable {
     AnexoDesconhecido(Aula aula, String titulo) {
         super(aula, titulo);
     }

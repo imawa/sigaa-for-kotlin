@@ -1,6 +1,8 @@
 package com.stacked.sigaa_ifc;
 
-public class Nota {
+import java.io.Serializable;
+
+public class Nota implements Serializable {
     /*
         Notas do botão de Ver Notas de cada disciplina
          */

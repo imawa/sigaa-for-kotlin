@@ -1,6 +1,8 @@
 package com.stacked.sigaa_ifc;
 
-public class Participante {
+import java.io.Serializable;
+
+public class Participante implements Serializable {
     int tipo; //0 = discente; 1 = docente
     int matricula;
     String nome, login, urlAvatar, email;
