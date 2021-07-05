@@ -116,17 +116,18 @@ public class Sessao {
     }
 
     //confere a pagina inicial (renomeei de usuarioLogado -> conferirUsuarioLogado para não confundir)
-    public boolean conferirUsuarioLogado() {
+    public boolean conferirUsuarioLogado() throws ExcecaoSIGAA {
         try {
             Response r = get("/sigaa/portais/discente/discente.jsf");
             if (respostaValida(r)) {
                 return !(r.priorResponse() != null && r.priorResponse().isRedirect()); //Se redirecionou é porque nao ta logado
+            } else {
+                throw new ExcecaoSIGAA("conferirUsuarioLogado() não foi possível se conectar com o SIGAA");
             }
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
-        return true;
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -259,6 +260,7 @@ public class Sessao {
             Document docBoletins = Jsoup.parse(responseBoletins.body().string());
             if (!usuarioLogado(docBoletins)) throw new ExcecaoSessaoExpirada("sessão expirada");
 
+            //TODO: caso ele vá direto para a página do boletim?
             Element bodyTabela = docBoletins.getElementsByClass("listagem").get(0).getElementsByTag("tbody").get(0);
             for(Element c : bodyTabela.children()) {
                 periodos.add(c.child(0).text());
@@ -271,6 +273,7 @@ public class Sessao {
         }
     }
 
+    //TODO: somente 1 boletim
     public String pegarBodyBoletim(String periodo) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
         try {
             //Página principal
