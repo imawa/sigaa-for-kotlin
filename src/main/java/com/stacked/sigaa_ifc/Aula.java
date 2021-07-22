@@ -3,7 +3,7 @@ package com.stacked.sigaa_ifc;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Aula implements Serializable {
+public class Aula {
     private String titulo, html;
     private ArrayList<Anexo> anexos = new ArrayList<>();
     private Disciplina disciplina;

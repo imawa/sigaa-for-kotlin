@@ -1,2 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.stacked.sigaa_ifc" />
+    package="com.stacked.sigaa_ifc" >
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+</manifest>

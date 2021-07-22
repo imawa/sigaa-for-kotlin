@@ -1,7 +1,5 @@
 package com.stacked.sigaa_ifc;
 
-import java.io.InputStream;
-
 public class Arquivo {
     private String nome;
     private byte[] bytes;

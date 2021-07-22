@@ -1,10 +1,9 @@
 package com.stacked.sigaa_ifc;
 
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class AnexoTarefa extends Anexo implements Serializable {
+public class AnexoTarefa extends Anexo {
     public static SimpleDateFormat formato_data = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     private Date inicio, fim;

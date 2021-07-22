@@ -1,8 +1,6 @@
 package com.stacked.sigaa_ifc;
 
-import java.io.Serializable;
-
-public abstract class Anexo implements Serializable {
+public abstract class Anexo {
     private String titulo = "";
     private Aula aula;
 

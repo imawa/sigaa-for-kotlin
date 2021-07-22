@@ -37,7 +37,7 @@ public class Parsers {
                     .build();
             return body_aviso;
         } else {
-            System.out.println(Sessao.logMSG + "botão para pular o aviso não encontrado");
+            System.out.println(Sessao.TAG + "botão para pular o aviso não encontrado");
         }
         return null;
     }
@@ -129,7 +129,7 @@ public class Parsers {
                     }
                     String[][] pl = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, p};
                     botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_PARTICIPANTES, pl));
-                    //System.out.println(Sessao.logMSG + pl[0][0] + " " + pl[0][1] + " // " + pl[1][0] + " " + pl[1][1]);
+                    //System.out.println(Sessao.TAG + pl[0][0] + " " + pl[0][1] + " // " + pl[1][0] + " " + pl[1][1]);
                     break;
 
                 case "Avaliações":
@@ -181,8 +181,8 @@ public class Parsers {
             Element listaUsuarios = listaParticipantes.get(listaP).getElementsByTag("tbody").get(0);
             //Linhas (1-2 usuarios)
             for(Element linha : listaUsuarios.getElementsByTag("tr")) {
-                //System.out.println(Sessao.logMSG + linha);
-                //System.out.println(Sessao.logMSG + listaUsuarios.getElementsByTag("tr").size());
+                //System.out.println(Sessao.TAG + linha);
+                //System.out.println(Sessao.TAG + listaUsuarios.getElementsByTag("tr").size());
 
                 for(Element elementosUsuariosLinha : linha.getAllElements()) {
                     //valign="top" -> elemento com informações do usuário
@@ -205,7 +205,7 @@ public class Parsers {
                                 matricula = Integer.parseInt(e.text());
                             }
                         }
-                        //System.out.println(Sessao.logMSG + tipo +" " + nome + " " + usuario + " " + email + " " + matricula);
+                        //System.out.println(Sessao.TAG + tipo +" " + nome + " " + usuario + " " + email + " " + matricula);
                         Participante _u = new Participante(tipo, nome, usuario, url_avatar, email);
                         if(matricula != 0) _u.definirMatricula(matricula); //Só discentes possuem matrícula aqui
                         participantes.add(_u);
@@ -389,7 +389,7 @@ public class Parsers {
                 int quantidadeTarefas = (corpoTabela.children().size())/2;
                 for(int j = 0; j < quantidadeTarefas; j++) {
                     if(corpoTabela.children().get(j*2) == null || corpoTabela.children().get(j*2+1) == null) {
-                        System.out.println(Sessao.logMSG + "Não foi possível parsar uma tarefa");
+                        System.out.println(Sessao.TAG + "Não foi possível parsar uma tarefa");
                         continue;
                     }
 
@@ -401,7 +401,7 @@ public class Parsers {
                     String titulo = linhaInformacao.children().get(1).text();
                     int envios = Integer.parseInt(linhaInformacao.children().get(4).text());
 
-                    //System.out.println(Sessao.logMSG + titulo);
+                    //System.out.println(Sessao.TAG + titulo);
 
                     String[] datas = linhaInformacao.children().get(2).text().replace("h", ":").split(" ");
                     Date inicio = new Date();
@@ -469,12 +469,12 @@ public class Parsers {
                  //Arquivo enviado pelo discente
                  String urlArquivo = ((!url_base.startsWith("http://") && !url_base.startsWith("https://")) ? "http://" : "") + url_base + c.child(0).attr("href");
                  e.setUrlArquivo(urlArquivo);
-             //    System.out.println(Sessao.logMSG + urlArquivo);
+             //    System.out.println(Sessao.TAG + urlArquivo);
              } else if(c.previousElementSibling().text().equals("Resposta:")) {
                  //Resposta do discente
                  String resposta = formatarTextoDoElemento(c);
                  e.setResposta(resposta);
-               //  System.out.println(Sessao.logMSG + resposta);
+               //  System.out.println(Sessao.TAG + resposta);
              } else if(c.previousElementSibling().text().equals("Comentários:")) {
                  //Comentários do discente ou docente
                  Element legenda = c.parent().parent().parent().getElementsByTag("legend").first();
@@ -482,18 +482,18 @@ public class Parsers {
                     //Discente
                      String comentariosDiscente = formatarTextoDoElemento(c);
                      e.setComentariosDiscente(comentariosDiscente);
-                   //  System.out.println(Sessao.logMSG + comentariosDiscente);
+                   //  System.out.println(Sessao.TAG + comentariosDiscente);
                  } else {
                      //Docente
                      String comentariosDocente = formatarTextoDoElemento(c);
                      e.setComentariosDocente(comentariosDocente);
-                  //   System.out.println(Sessao.logMSG + comentariosDocente);
+                  //   System.out.println(Sessao.TAG + comentariosDocente);
                  }
              } else if(c.previousElementSibling().text().equals("Nota:")) {
                  //Nota
                  float nota = Float.parseFloat((c.text()).replace(",", "."));
                  e.setNota(nota);
-              //   System.out.println(Sessao.logMSG + nota);
+              //   System.out.println(Sessao.TAG + nota);
              }
             }
             return e;
@@ -572,7 +572,7 @@ public class Parsers {
                             aula.adicionarAnexo(new AnexoSite(aula, a.getElementsByTag("a").get(0).text(), a.getElementsByTag("a").get(0).attr("href")));
                         }
                     } else if(img.attr("src").equals("/sigaa/img/porta_arquivos/icones/tarefa.png")) {
-                        //System.out.println(Sessao.logMSG + "Tarefa");
+                        //System.out.println(Sessao.TAG + "Tarefa");
                         //(abre a pagina da tarefa)
 
                         //Inicia em 09/02/2021 às 0h 0 e finaliza em 25/02/2021 às 23h 59
@@ -596,7 +596,7 @@ public class Parsers {
 
                         aula.adicionarAnexo(new AnexoTarefa(aula, tituloAnexo, id, inicio, fim, enviavel));
                     } else if(img.attr("src").equals("/sigaa/ava/img/questionario.png")) {
-                        System.out.println(Sessao.logMSG + "Anexo não implementado: questionario");
+                        System.out.println(Sessao.TAG + "Anexo não implementado: questionario");
                         //(abre o questionario)
                         /////////////todo 1
                         Element elA = a.getElementsByTag("a").get(0);
@@ -604,7 +604,7 @@ public class Parsers {
 
                         aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
                     } else if(img.attr("src").equals("/sigaa/ava/img/forumava.png")) {
-                        System.out.println(Sessao.logMSG + "Anexo não implementado: fórum");
+                        System.out.println(Sessao.TAG + "Anexo não implementado: fórum");
                         //(abre o forum)
                         /////////////todo 3
                         Element elA = a.getElementsByTag("a").get(0);
@@ -612,7 +612,7 @@ public class Parsers {
 
                         aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
                     } else if(img.attr("src").equals("/sigaa/img/porta_arquivos/icones/conteudo.png")) {
-                        System.out.println(Sessao.logMSG + "Anexo não implementado: conteúdo");
+                        System.out.println(Sessao.TAG + "Anexo não implementado: conteúdo");
                         //(abre a pagina visualização de conteudo na turma vritual)
                         /////////////todo 2
                         Element elA = a.getElementsByTag("a").get(0);
@@ -621,7 +621,7 @@ public class Parsers {
                         aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
                     } else {
                         //desconhecido
-                        System.out.println(Sessao.logMSG + "Anexo desconhecido: " + img.attr("src"));
+                        System.out.println(Sessao.TAG + "Anexo desconhecido: " + img.attr("src"));
 
                         Element elA = a.getElementsByTag("a").get(0);
                         String tituloAnexo = elA.text();

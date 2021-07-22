@@ -1,8 +1,6 @@
 package com.stacked.sigaa_ifc;
 
-import java.io.Serializable;
-
-public class AnexoInfoArquivo extends Anexo implements Serializable {
+public class AnexoInfoArquivo extends Anexo {
     private String j_id_jsp, id;
 
     AnexoInfoArquivo(Aula aula, String titulo, String j_id_jsp, String id) {

@@ -1,10 +1,9 @@
 package com.stacked.sigaa_ifc;
 
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class Avaliacao implements Serializable {
+public class Avaliacao {
     public static SimpleDateFormat formato_data = new SimpleDateFormat("dd/MM/yyyy HH:mm");
     /*
     Avaliações do "VER AVALIAÇÕES" das disciplinas

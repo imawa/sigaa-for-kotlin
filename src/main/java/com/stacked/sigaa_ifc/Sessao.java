@@ -1,5 +1,7 @@
 package com.stacked.sigaa_ifc;
 
+import android.content.Context;
+
 import okhttp3.*;
 
 import java.io.IOException;
@@ -14,16 +16,22 @@ import okhttp3.FormBody;
 
 public class Sessao {
     //TODO: Eu posso salvar a ultima página salva para acelerar tudo. Não precisaria ficar pegando a página inicial de uma disciplina toda vez que for ver cada coisa
-    public static String logMSG = "Debug API: ";
-    private String url_base;
+    public static String TAG = "[SIGAA]";
+    private String url_base = "sig.ifc.edu.br";
     private OkHttpClient client;
 
     private String JSESSIONID = null;
     private Usuario usuarioSalvo = null;
 
-    public Sessao(String url_base) {
-        this.url_base = url_base.replace("/", "").replace("https:", "").replace("http:", "");
-        client = new OkHttpClient();
+    private String usuario;
+    private String senha;
+
+    public Sessao(Context context) {
+        //this.url_base = url_base.replace("/", "").replace("https:", "").replace("http:", "");
+
+        client = new OkHttpClient.Builder()
+        .addInterceptor(new Interceptor(context, this))
+        .build();
     }
 
     public Sessao(PacoteSessao pacote) {
@@ -41,7 +49,7 @@ public class Sessao {
         return JSESSIONID;
     }
 
-    String getUrl_base() {
+    String getUrlBase() {
         return url_base;
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,15 +88,13 @@ public class Sessao {
                 .post(body)
                 .build();
 
-        //TODO: preciso .addInterceptor() ?
-
         return client.newCall(request).execute();
     }
 
     /*
     Confere se a resposta eh valida e se o SIGAA nao esta em manutencao
      */
-    private boolean respostaValida(Response r) {
+    public static boolean respostaValida(Response r) {
         if (r != null && r.isSuccessful()) {
             if (r.priorResponse() != null && r.priorResponse().isRedirect())
                 return !(r.priorResponse().headers().get("Location").contains("manutencao.html"));
@@ -138,6 +144,9 @@ public class Sessao {
     Loga a sessão e um usuário não completo (com os dados disponíveis na página principal) se logar corretamente. Retorna null se acontecer algum erro
     */
     public boolean login(final String usuario, final String senha) throws ExcecaoSIGAA, ExcecaoAPI, ExcecaoSessaoExpirada {
+        this.usuario = usuario;
+        this.senha = senha;
+
         try {
             //JSESSIONID TODO: Acredito que dá para tirar isso aqui do JSESSIONID, enviar o post de logar direto e pegar o JSESSIONID depois
             JSESSIONID = null;
@@ -146,7 +155,7 @@ public class Sessao {
                 throw new ExcecaoSIGAA("login() resposta inválida / SIGAA em manutenção");
 
             JSESSIONID = responsePgLogin.header("Set-Cookie").replace("(", "").replace(")", "").split(";")[0].split("JSESSIONID=")[1];
-            System.out.println(logMSG + "Obtido um JSESSIONID");
+            System.out.println(TAG + "Obtido um JSESSIONID");
 
             //Logar JSESSIONID
             //Body
@@ -166,7 +175,7 @@ public class Sessao {
 
             //Usuario ou senha incorretos (retorna false)
             if (responseLogin.priorResponse() == null) {
-                System.out.println(logMSG + "login() sem resposta -> usuário ou senha incorretos");
+                System.out.println(TAG + "login() sem resposta -> usuário ou senha incorretos");
                 return false;
             }
 
@@ -178,7 +187,7 @@ public class Sessao {
             //Pular página de aviso
             while (urlRedirecionado.contains(url_base + "/sigaa/telaAvisoLogon.jsf")) {
                 //TODO: Testar. Não tive oportunidade para testar após a limpeza do código
-                System.out.println(Sessao.logMSG + "login() redirecionado para um aviso");
+                System.out.println(Sessao.TAG + "login() redirecionado para um aviso");
 
                 FormBody bodyAviso = Parsers.paginaAvisoSkipBody(docRespostaLogin);
                 Response responseAviso = post("/sigaa/telaAvisoLogon.jsf", bodyAviso);
@@ -195,7 +204,7 @@ public class Sessao {
 
             //Conferir se logou
             if (!usuarioLogado(docRespostaLogin, false)) {
-                System.out.println(logMSG + "login() não foi identificado o login na página redirecionada");
+                System.out.println(TAG + "login() não foi identificado o login na página redirecionada");
                 Response responsePaginaInicial = get("/sigaa/portais/discente/discente.jsf");
                 if (!respostaValida(responsePaginaInicial))
                     throw new ExcecaoSIGAA("login() resposta inválida / SIGAA em manutenção");
@@ -205,13 +214,25 @@ public class Sessao {
                     throw new ExcecaoSessaoExpirada("login() não foi possível logar");
             }
 
-            System.out.println(logMSG + "login() sem problemas");
+            System.out.println(TAG + "login() sem problemas");
             usuarioSalvo = Parsers.mainPageDadosUsuario(docRespostaLogin, url_base, usuario);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
             throw new ExcecaoAPI("login() IOException");
         }
+    }
+
+    /*
+    Utilizado pelo interceptor para relogar
+     */
+    protected boolean login() throws ExcecaoAPI, ExcecaoSessaoExpirada, ExcecaoSIGAA {
+        return login(this.usuario, this.senha);
+    }
+
+    public void deslogar() {
+        JSESSIONID = null;
+        usuarioSalvo = null;
     }
 
     public Usuario getUsuario() { return usuarioSalvo; }
@@ -617,7 +638,7 @@ public class Sessao {
                     .header("Cookie", "JSESSIONID=" + JSESSIONID)
                     .post(body_envioTarefa)
                     .build();
-            //TODO: preciso .addInterceptor() ?
+
             Response responseEnvioTarefa = client.newCall(requestEnvioTarefa).execute();
             if (!respostaValida(responseEnvioTarefa))
                 throw new ExcecaoSIGAA("disciplinaAcessarBotaoMenu() resposta inválida / SIGAA em manutenção");
@@ -628,10 +649,10 @@ public class Sessao {
                 throw new ExcecaoSessaoExpirada("disciplinaAcessarBotaoMenu() sessão expirada");
 
             if (docEnvio.getElementsByClass("info").size() > 0 && docEnvio.getElementsByClass("info").first().children().size() > 0 && docEnvio.getElementsByClass("info").first().children().first().text().equals("Operação realizada com sucesso!")) {
-                System.out.println(logMSG + "disciplinaEnviarTarefa() Identificou confirmação de envio. Tarefa enviada com sucesso");
+                System.out.println(TAG + "disciplinaEnviarTarefa() Identificou confirmação de envio. Tarefa enviada com sucesso");
                 return true;
             } else {
-                System.out.println(logMSG + "disciplinaEnviarTarefa() Não identificou o pop-up de confirmação de envio");
+                System.out.println(TAG + "disciplinaEnviarTarefa() Não identificou o pop-up de confirmação de envio");
                 return false;
             }
         } catch (IOException e) {
@@ -799,29 +820,29 @@ public class Sessao {
                             usuarioSalvo = new usuario(nome, campus, email, matricula, disciplinas, botoesUsuario);
                             return usuarioSalvo;
                         } else {
-                            System.out.println(logMSG + "inicializarUsuario() POST disciplina sem sucesso");
+                            System.out.println(TAG + "inicializarUsuario() POST disciplina sem sucesso");
                             return null;
                         }
                     } else {
                         //todo: usuario sem disciplinas
                         //Usuario = new usuario(nome, campus, email, matricula, new botaoDocumento[] {meusDados});
-                        System.out.println(logMSG + logado());
+                        System.out.println(TAG + logado());
                         ArrayList<botaoDocumento> botoesUsuario = new ArrayList<botaoDocumento>();
                         botoesUsuario.add(meusDados);
                         usuarioSalvo = new usuario(nome, campus, email, matricula, botoesUsuario);
                         return usuarioSalvo;
                     }
                 } else {
-                   System.out.println(logMSG + "inicializarUsuario() POST meus dados sem sucesso");
+                   System.out.println(TAG + "inicializarUsuario() POST meus dados sem sucesso");
                     return null;
                 }
             } else {
-                System.out.println(logMSG + "inicializarUsuario() GET main page sem sucesso");
+                System.out.println(TAG + "inicializarUsuario() GET main page sem sucesso");
                 return null;
             }
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println(logMSG + "inicializarUsuario() " + e);
+            System.out.println(TAG + "inicializarUsuario() " + e);
             return null;
         }
     }*/

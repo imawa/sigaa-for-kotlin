@@ -9,7 +9,7 @@ public class PacoteSessao implements Serializable {
 
     protected PacoteSessao(Sessao sessao) {
         this.JSESSIONID = sessao.getJSESSIONID();
-        this.url_base = sessao.getUrl_base();
+        this.url_base = sessao.getUrlBase();
         this.usuario = sessao.getUsuario();
     }
 
