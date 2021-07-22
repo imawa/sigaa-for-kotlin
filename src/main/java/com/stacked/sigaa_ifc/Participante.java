@@ -1,9 +1,9 @@
 package com.stacked.sigaa_ifc;
 
 public class Participante {
-    int tipo; //0 = discente; 1 = docente
-    int matricula;
-    String nome, login, urlAvatar, email;
+    private int tipo; //0 = discente; 1 = docente
+    private int matricula;
+    private String nome, login, urlAvatar, email;
 
     Participante(int tipo, String nome, String login, String urlAvatar, String email) {
         this.tipo = tipo;
@@ -18,5 +18,21 @@ public class Participante {
 
     void definirMatricula(int matricula) { //Professores não é informado
         this.matricula = matricula;
+    }
+
+    public int getMatricula() {
+        return matricula;
+    }
+    public String getNome() {
+        return nome;
+    }
+    public String getLogin() {
+        return login;
+    }
+    public String getUrlAvatar() {
+        return urlAvatar;
+    }
+    public String getEmail() {
+        return email;
     }
 }

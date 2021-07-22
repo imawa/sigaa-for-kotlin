@@ -31,53 +31,45 @@ public class Interceptor implements okhttp3.Interceptor {
     @Override
     public Response intercept(@NotNull Chain chain) throws IOException {
         Request request = chain.request();
-        if(!isConnectionOn() || !isInternetAvailable()) throw new ExcecaoSemInternet();
+        if (!isConnectionOn() || !isInternetAvailable())
+            throw new IOException("Internet não disponível");
 
         Response response = chain.proceed(request);
 
-        if(sessao.respostaValida(response)) {
+        if (sessao.respostaValida(response)) {
             //Conferir sessão expirada
-            if(response.priorResponse() != null && response.priorResponse().headers().get("Location").contains("expirada.jsp")) {
+            if (response.priorResponse() != null && response.priorResponse().headers().get("Location").contains("expirada.jsp")) {
                 Log.d(TAG, "intercept: sessão expirada");
-                //Relogar
-                try {
-                    if(sessao.login()) {
-                        Log.d(TAG, "intercept: sessão relogada");
 
-                        //Repetir o request anterior com o novo JSESSIONID
-                        Request requestNova;
-                        if(request.body() != null) {
-                            requestNova = new Request.Builder()
-                                    .url(request.url())
-                                    .header("Content-Type", "application/x-www-form-urlencoded")
-                                    .header("Cookie", "JSESSIONID=" + sessao.getJSESSIONID())
-                                    .post(request.body())
-                                    .build();
-                        } else {
-                            requestNova = new Request.Builder()
-                                    .url(request.url())
-                                    .header("Content-Type", "application/x-www-form-urlencoded")
-                                    .header("Cookie", "JSESSIONID=" + sessao.getJSESSIONID())
-                                    .build();
-                        }
-                        response.close();
-                        response = chain.proceed(requestNova);
+                //Relogar
+                if (sessao.getLogin() != null && sessao.login()) {
+                    Log.d(TAG, "intercept: sessão relogada");
+
+                    //Repetir o request anterior com o novo JSESSIONID
+                    Request requestNova;
+                    if (request.body() != null) {
+                        requestNova = new Request.Builder()
+                                .url(request.url())
+                                .header("Content-Type", "application/x-www-form-urlencoded")
+                                .header("Cookie", "JSESSIONID=" + sessao.getJSESSIONID())
+                                .post(request.body())
+                                .build();
+                    } else {
+                        requestNova = new Request.Builder()
+                                .url(request.url())
+                                .header("Content-Type", "application/x-www-form-urlencoded")
+                                .header("Cookie", "JSESSIONID=" + sessao.getJSESSIONID())
+                                .build();
                     }
-                } catch (ExcecaoAPI excecaoAPI) {
-                    excecaoAPI.printStackTrace();
-                } catch (ExcecaoSessaoExpirada excecaoSessaoExpirada) {
-                    excecaoSessaoExpirada.printStackTrace();
-                } catch (ExcecaoSIGAA excecaoSIGAA) {
-                    excecaoSIGAA.printStackTrace();
+                    response.close();
+                    response = chain.proceed(requestNova);
                 }
-                
             }
         } else {
             //Manunteção ou resposta inválida -> deslogar
             sessao.deslogar();
         }
-
-        if(!response.isSuccessful()) throw new ExcecaoSemInternet();
+        if (!response.isSuccessful()) throw new IOException("Resposta invalida");
 
         return response;
     }
