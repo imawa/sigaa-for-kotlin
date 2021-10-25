@@ -187,6 +187,7 @@ public class Sessao {
         //Pular página de aviso
         while (urlRedirecionado.contains(url_base + "/sigaa/telaAvisoLogon.jsf")) {
             //TODO: Testar. Não tive oportunidade para testar após a limpeza do código
+            //TODO 2: Talvez seja possível pular somente solicitando o /sigaa/verPortalDiscente.do
             System.out.println(Sessao.TAG + "login() redirecionado para um aviso");
 
             FormBody bodyAviso = Parsers.paginaAvisoSkipBody(docRespostaLogin);
@@ -198,6 +199,21 @@ public class Sessao {
 
             docRespostaLogin = Jsoup.parse(responseAviso.body().string());
             urlRedirecionado = responseAviso.priorResponse().headers().get("Location").replace("https://", "").replace("http://", "");
+            if ((urlRedirecionado.substring(urlRedirecionado.length() - 1)) == "/")
+                urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
+        }
+        //Pular página do questionário
+        while (urlRedirecionado.contains(url_base + "/sigaa/questionarios.jsf")) {
+            System.out.println(TAG + "login() redirecionado para o questionário");
+
+            Response responseQuestionario = get("/sigaa/verPortalDiscente.do");
+            if (!respostaValida(responseQuestionario))
+                throw new IOException("login() resposta inválida / SIGAA em manutenção");
+            if (responseQuestionario.priorResponse() == null)
+                throw new IOException("login() não foi possível pular o questionário");
+
+            docRespostaLogin = Jsoup.parse(responseQuestionario.body().string());
+            urlRedirecionado = responseQuestionario.priorResponse().headers().get("Location").replace("https://", "").replace("http://", "");
             if ((urlRedirecionado.substring(urlRedirecionado.length() - 1)) == "/")
                 urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
         }
