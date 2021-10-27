@@ -218,6 +218,13 @@ public class Sessao {
                 urlRedirecionado = urlRedirecionado.substring(0, urlRedirecionado.length() - 1); //Remover / final
         }
 
+        //Usuário não é um discente
+        if(urlRedirecionado.contains(url_base + "/sigaa/vinculos.jsf") || urlRedirecionado.contains(url_base + "/sigaa/verMenuPrincipal.do")) {
+            System.out.println(TAG + "login() usuário não é um discente");
+            JSESSIONID = null;
+            return false;
+        }
+
         //Conferir se logou
         if (!usuarioLogado(docRespostaLogin, false)) {
             System.out.println(TAG + "login() não foi identificado o login na página redirecionada");
