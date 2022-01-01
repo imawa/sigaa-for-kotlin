@@ -53,7 +53,7 @@ public class Parsers {
 
             Disciplina _d = new Disciplina(false, periodo, _e.html(), _e.outerHtml().split("'")[3], _e.outerHtml().split("'")[5], _e.outerHtml().split("'")[11]);
             String _id = e.parent().nextElementSibling().child(0).id().replace("linha_", "");
-            _d.definirId(_id);
+            _d.setId(_id);
 
             disciplinas.add(_d);
         }
@@ -333,6 +333,7 @@ public class Parsers {
         //0=dia
         //1=hora
         //2=descricao
+        //3= botao
         ArrayList<Avaliacao> avaliacoes = new ArrayList<>();
 
         Element itensTabela = null;
@@ -341,6 +342,7 @@ public class Parsers {
         } else return new ArrayList<>();
 
         for(Element avaliacao : itensTabela.getElementsByTag("tr")) {
+            long id = 0;
             String descricao = "";
             String dia = "", hora = "";
             for(Element dado : avaliacao.getElementsByTag("td")) {
@@ -357,6 +359,12 @@ public class Parsers {
                     case 2:
                         descricao = dado.text();
                         break;
+
+                    case 3:
+                        String onclick = dado.child(0).attr("onclick");
+                        String sId = onclick.split("'")[11];
+                        id = Long.parseLong(sId);
+                        break;
                 }
             }
 
@@ -368,7 +376,7 @@ public class Parsers {
             try {
                 data = Avaliacao.formato_data.parse(dia + " " + hora);
             } catch (ParseException e) {e.printStackTrace();}
-            Avaliacao _a = new Avaliacao(disc, data, descricao);
+            Avaliacao _a = new Avaliacao(id, disc, data, descricao);
             avaliacoes.add(_a);
         }
         //document.getElementsByClassName("listing")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr")[0].getElementsByTagName("td")
@@ -446,12 +454,12 @@ public class Parsers {
                     }
 
                     t = new Tarefa(disc, titulo, descricao, inicio, fim, envios, enviavel, enviada, corrigida);
-                    if(url_arquivo != "") t.definirUrlArquivo(url_arquivo);
+                    if(url_arquivo != "") t.setUrlArquivo(url_arquivo);
                     if(enviavel || enviada) t.definirIds(id, j_id);
-                    if(enviavel) t.definirIdEnvio(j_idEnviar);
-                    if(enviada) t.definirIdVisualizacao(j_idVisualizar);
+                    if(enviavel) t.setIdEnvio(j_idEnviar);
+                    if(enviada) t.setIdVisualizacao(j_idVisualizar);
 
-                    t.definirId(id);//////
+                    t.setId(id);//////
 
                     tarefas.add(t);
                 }

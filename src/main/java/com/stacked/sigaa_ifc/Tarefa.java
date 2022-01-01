@@ -19,7 +19,7 @@ public class Tarefa {
     private boolean enviavel, enviada, corrigida;
     private Disciplina disciplina;
 
-    Tarefa(Disciplina disciplina, String titulo, String descricao, Date inicio, Date fim, int envios, boolean enviavel, boolean enviada, boolean corrigida) {
+    public Tarefa(Disciplina disciplina, String titulo, String descricao, Date inicio, Date fim, int envios, boolean enviavel, boolean enviada, boolean corrigida) {
         this.titulo = titulo;
         this.descricao = descricao;
         this.inicio = inicio;
@@ -31,29 +31,98 @@ public class Tarefa {
         this.disciplina = disciplina;
     }
 
-    public String getTitulo() { return titulo; }
-    public String getDescricao() { return descricao; }
-    public Date getInicio() { return inicio; }
-    public Date getFim() { return fim; }
-    public int getEnvios() { return envios; }
-    public boolean enviavel() { return enviavel; }
-    public boolean enviada() { return enviada; }
-    public boolean corrigida() { return corrigida; }
-    public boolean contemArquivo() { return (urlDownload != ""); }
-    public String getUrlArquivo() { return urlDownload; }
-    public Disciplina getDisciplina() { return disciplina; }
+    public String getTitulo() {
+        return titulo;
+    }
 
-    void definirIds(String id, String j_id) {
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public Date getInicio() {
+        return inicio;
+    }
+
+    public Date getFim() {
+        return fim;
+    }
+
+    public int getEnvios() {
+        return envios;
+    }
+
+    public boolean isEnviavel() {
+        return enviavel;
+    }
+
+    public boolean isEnviada() {
+        return enviada;
+    }
+
+    public boolean isCorrigida() {
+        return corrigida;
+    }
+
+    public boolean contemArquivo() {
+        return (urlDownload != "");
+    }
+
+    public String getUrlArquivo() {
+        return urlDownload;
+    }
+
+    public Disciplina getDisciplina() {
+        return disciplina;
+    }
+
+    public void definirIds(String id, String j_id) {
         this.id = id;
         this.j_id = j_id;
     }
-    void definirIdEnvio(String id) { j_idEnviar = id; }
-    void definirIdVisualizacao(String id) { j_idVisualizar = id; }
-    void definirUrlArquivo(String dir) { urlDownload = dir; }
-    void definirId(String id) { this.id = id; }
+
+    public void setIdEnvio(String id) {
+        j_idEnviar = id;
+    }
+
+    public void setIdVisualizacao(String id) {
+        j_idVisualizar = id;
+    }
+
+    public void setUrlArquivo(String dir) {
+        urlDownload = dir;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     private String id, j_id, j_idEnviar, j_idVisualizar;
-    String getId() { return id; }
-    String[] postArgsEnviar() { return new String[]{j_id, (j_id + ":" + j_idEnviar), id}; }
-    String[] postArgsVisualizar() { return new String[]{j_id, (j_id + ":" + j_idVisualizar), id}; }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getJ_Id() {
+        return j_id;
+    }
+
+    public void setJ_Id(String j_id) {
+        this.j_id = j_id;
+    }
+
+    public String getJ_IdEnviar() {
+        return j_idEnviar;
+    }
+
+    public String getJ_idVisualizar() {
+        return j_idVisualizar;
+    }
+
+    public String[] getPostArgsEnviar() {
+        return new String[]{j_id, (j_id + ":" + j_idEnviar), id};
+    }
+
+    public String[] getPostArgsVisualizar() {
+        return new String[]{j_id, (j_id + ":" + j_idVisualizar), id};
+    }
 }

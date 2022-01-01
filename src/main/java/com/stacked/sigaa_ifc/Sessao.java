@@ -388,7 +388,7 @@ public class Sessao {
     private Document acessarPaginaTurmaVirtual(Disciplina d) throws IOException {
         if (d == null) return null;
 
-        String caminhoGet = (!d.paginaTodasTurmasVirtuais()) ? "/sigaa/portais/discente/discente.jsf" : "/sigaa/portais/discente/turmas.jsf", caminhoPost = (!d.paginaTodasTurmasVirtuais()) ? "/sigaa/portais/discente/discente.jsf#" : "/sigaa/portais/discente/turmas.jsf";
+        String caminhoGet = (!d.isRetiradoDaPaginaTodasTurmasVirtuais()) ? "/sigaa/portais/discente/discente.jsf" : "/sigaa/portais/discente/turmas.jsf", caminhoPost = (!d.isRetiradoDaPaginaTodasTurmasVirtuais()) ? "/sigaa/portais/discente/discente.jsf#" : "/sigaa/portais/discente/turmas.jsf";
 
         final Response G = get(caminhoGet);
         if (!respostaValida(G))
@@ -398,18 +398,18 @@ public class Sessao {
         Document D = Jsoup.parse(G.body().string());
         if (!usuarioLogado(D)) throw new IOException("sessão expirada");
 
-        FormBody body_disciplina = (!d.paginaTodasTurmasVirtuais()) ? new FormBody.Builder()
-                .add(d.postArgs()[0], d.postArgs()[0])
+        FormBody body_disciplina = (!d.isRetiradoDaPaginaTodasTurmasVirtuais()) ? new FormBody.Builder()
+                .add(d.getPostArgs()[0], d.getPostArgs()[0])
                 .add("javax.faces.ViewState", javaxViewState(D))
-                .add(d.postArgs()[1], d.postArgs()[1])
-                .add("frontEndIdTurma", d.postArgs()[2])
+                .add(d.getPostArgs()[1], d.getPostArgs()[1])
+                .add("frontEndIdTurma", d.getPostArgs()[2])
                 .build()
                 :
                 new FormBody.Builder()
-                        .add(d.postArgs()[0], d.postArgs()[0])
+                        .add(d.getPostArgs()[0], d.getPostArgs()[0])
                         .add("javax.faces.ViewState", javaxViewState(D))
-                        .add(d.postArgs()[1], d.postArgs()[1])
-                        .add("frontEndIdTurma", d.postArgs()[2])
+                        .add(d.getPostArgs()[1], d.getPostArgs()[1])
+                        .add("frontEndIdTurma", d.getPostArgs()[2])
                         .add("inciadoPelaBusca", "true")
                         .add("paginaListaTurmasOrigem", "/portais/discente/turmas.jsp")
                         .build();
@@ -518,9 +518,9 @@ public class Sessao {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private Response disciplinaAbrirEnvioTarefa(Tarefa tarefa) throws IOException {
-        if (tarefa == null || !tarefa.enviavel()) return null;
+        if (tarefa == null || !tarefa.isEnviavel()) return null;
 
-        if (tarefa.getDisciplina().id() != null) {
+        if (tarefa.getDisciplina().getId() != null) {
             // [1] Método rápido (usado pras disciplinas visíveis na página principal): página principal -> página tarefa
 
             final Response responsePgDiscente = get("/sigaa/portais/discente/discente.jsf");
@@ -536,7 +536,7 @@ public class Sessao {
                     .add("javax.faces.ViewState", javaxViewState(docPgDiscente))
                     .add("formAtividades:visualizarTarefaTurmaVirtual", "formAtividades:visualizarTarefaTurmaVirtual")
                     .add("id", tarefa.getId())
-                    .add("idTurma", tarefa.getDisciplina().id())
+                    .add("idTurma", tarefa.getDisciplina().getId())
                     .build();
 
             return post("/sigaa/portais/discente/discente.jsf#", bodyTarefa);
@@ -546,9 +546,9 @@ public class Sessao {
             Document docTarefas = disciplinaAcessarBotaoMenu(tarefa.getDisciplina(), idBotaoDocumento.DISC_VER_TAREFAS);
 
             FormBody bodyTarefa = new FormBody.Builder()
-                    .add(tarefa.postArgsEnviar()[0], tarefa.postArgsEnviar()[0])
+                    .add(tarefa.getPostArgsEnviar()[0], tarefa.getPostArgsEnviar()[0])
                     .add("javax.faces.ViewState", javaxViewState(docTarefas))
-                    .add(tarefa.postArgsEnviar()[1], tarefa.postArgsEnviar()[1])
+                    .add(tarefa.getPostArgsEnviar()[1], tarefa.getPostArgsEnviar()[1])
                     .add("id", tarefa.getId())
                     .build();
 
@@ -558,7 +558,7 @@ public class Sessao {
 
     //Obtem o form de uma tarefa, que é usado pra enviar a tarefa
     public FormTarefa disciplinaObterFormTarefa(Tarefa tarefa) throws IOException {
-        if (tarefa == null || !tarefa.enviavel()) return null;
+        if (tarefa == null || !tarefa.isEnviavel()) return null;
 
         Response respostaPgTarefa = disciplinaAbrirEnvioTarefa(tarefa);
         if (!respostaValida(respostaPgTarefa))
@@ -607,7 +607,7 @@ public class Sessao {
 
     //TODO: Testar. Não cheguei a testar essa função após a limpeza do código
     public boolean disciplinaEnviarTarefa(FormTarefa formTarefa) throws IOException {
-        if (formTarefa.getTarefa() == null || !formTarefa.getTarefa().enviavel()) return false;
+        if (formTarefa.getTarefa() == null || !formTarefa.getTarefa().isEnviavel()) return false;
 
         Response responsePgTarefa = disciplinaAbrirEnvioTarefa(formTarefa.getTarefa());
         if (!respostaValida(responsePgTarefa))
@@ -685,10 +685,10 @@ public class Sessao {
 
         //Body para ver o envio
         FormBody body_envioTarefa = new FormBody.Builder()
-                .add(t.postArgsVisualizar()[0], t.postArgsVisualizar()[0])
+                .add(t.getPostArgsVisualizar()[0], t.getPostArgsVisualizar()[0])
                 .add("javax.faces.ViewState", javaxViewState(docTarefas))
-                .add(t.postArgsVisualizar()[1], t.postArgsVisualizar()[1])
-                .add("id", t.postArgsVisualizar()[2])
+                .add(t.getPostArgsVisualizar()[1], t.getPostArgsVisualizar()[1])
+                .add("id", t.getPostArgsVisualizar()[2])
                 .build();
 
         Response responseEnvioTarefa = post("/sigaa/ava/TarefaTurma/listar.jsf", body_envioTarefa);

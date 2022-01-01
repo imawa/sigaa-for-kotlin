@@ -5,7 +5,7 @@ public class Disciplina {
     private String nome, periodo, form_acessarTurmaVirtual, form_acessarTurmaVirtual_full, frontEndIdTurma;
     private boolean paginaTodasTurmasVirtuais;
 
-    Disciplina(boolean paginaTodasTurmasVirtuais, String periodo, String nome, String form_acessarTurmaVirtual, String form_acessarTurmaVirtual_full, String frontEndIdTurma) {
+    public Disciplina(boolean paginaTodasTurmasVirtuais, String periodo, String nome, String form_acessarTurmaVirtual, String form_acessarTurmaVirtual_full, String frontEndIdTurma) {
         this.paginaTodasTurmasVirtuais = paginaTodasTurmasVirtuais;
         this.periodo = periodo;
         this.nome = nome;
@@ -14,25 +14,27 @@ public class Disciplina {
         this.frontEndIdTurma = frontEndIdTurma;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getNome() {
         return nome;
     }
+
     public String getPeriodo() {
         return periodo;
     }
 
-    String[] postArgs() {
-        return new String[]{form_acessarTurmaVirtual, form_acessarTurmaVirtual_full, frontEndIdTurma};
-    }
-
-    boolean paginaTodasTurmasVirtuais() {
+    public boolean isRetiradoDaPaginaTodasTurmasVirtuais() {
         return paginaTodasTurmasVirtuais;
     }
 
-    String id() {
-        return id;
-    }
-    void definirId(String id) {
-        this.id = id;
+    public String[] getPostArgs() {
+        return new String[]{form_acessarTurmaVirtual, form_acessarTurmaVirtual_full, frontEndIdTurma};
     }
 }

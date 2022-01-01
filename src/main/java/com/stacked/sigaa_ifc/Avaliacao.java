@@ -8,17 +8,31 @@ public class Avaliacao {
     /*
     Avaliações do "VER AVALIAÇÕES" das disciplinas
      */
+    private long id;
     private Date data;
     private String descricao;
     private Disciplina disciplina;
 
-    public Avaliacao(Disciplina disciplina, Date data, String descricao) {
+    public Avaliacao(long id, Disciplina disciplina, Date data, String descricao) {
+        this.id = id;
         this.disciplina = disciplina;
         this.data = data;
         this.descricao = descricao;
     }
 
-    public Disciplina getDisciplina() {return disciplina;}
-    public Date getData() {return data;}
-    public String getDescricao() {return descricao;}
+    public long getId() {
+        return id;
+    }
+
+    public Disciplina getDisciplina() {
+        return disciplina;
+    }
+
+    public Date getData() {
+        return data;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
 }
