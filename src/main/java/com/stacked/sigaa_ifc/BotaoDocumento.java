@@ -6,7 +6,8 @@ enum idBotaoDocumento {
     DISC_VER_NOTAS,
     DISC_ARQUIVOS,
     DISC_VER_AVALIACOES,
-    DISC_VER_TAREFAS;
+    DISC_VER_TAREFAS,
+    DISC_VER_QUESTIONARIOS;
 }
 
 public class BotaoDocumento {

@@ -509,6 +509,13 @@ public class Sessao {
         return Parsers.paginaDisciplinaAvaliacoes(docAvaliacoes, d);
     }
 
+    public ArrayList<Questionario> disciplinaPegarQuestionarios(Disciplina d) throws IOException {
+        if (d == null) return new ArrayList<>();
+
+        Document docQuestionarios = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_VER_QUESTIONARIOS);
+        return Parsers.paginaDisciplinaQuestionarios(docQuestionarios, d);
+    }
+
     public ArrayList<Tarefa> disciplinaPegarTarefas(Disciplina d) throws IOException {
         if (d == null) return new ArrayList<>();
 

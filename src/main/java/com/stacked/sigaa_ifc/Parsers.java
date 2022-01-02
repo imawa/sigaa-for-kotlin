@@ -6,6 +6,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -154,6 +155,18 @@ public class Parsers {
                     }
                     String[][] aql = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, aq};
                     botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_ARQUIVOS, aql));
+                    break;
+
+                case "Questionários":
+                    String[] q = {"", ""};
+                    for (String a : l.get(i).parent().outerHtml().split("'")) {
+                        if (a.startsWith("formMenu:j_id_jsp_")) {
+                            if (q[0] == "") q[0] = a;
+                            else q[1] = a;
+                        }
+                    }
+                    String[][] ql = new String[][]{{l.get(i).parent().parent().parent().parent().parent().parent().parent().parent().id(), l.get(i).parent().parent().parent().parent().parent().parent().parent().id()}, q};
+                    botoesDisciplina.add(new BotaoDocumento(idBotaoDocumento.DISC_VER_QUESTIONARIOS, ql));
                     break;
             }
         }
@@ -507,6 +520,37 @@ public class Parsers {
             return e;
         }
         return null;
+    }
+
+    static protected ArrayList<Questionario> paginaDisciplinaQuestionarios(Document d, Disciplina disciplina) {
+        ArrayList<Questionario> questionarios = new ArrayList<>();
+
+        try {
+            final SimpleDateFormat formatoData = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            final Element bodyTabela = d.getElementsByClass("listing").get(0).child(1);
+
+            for(Element linha : bodyTabela.getElementsByTag("tr")) {
+                final String titulo = linha.child(0).text();
+
+                Date dataInicio = new Date();
+                Date dataFim = new Date();
+                try {
+                    dataInicio = formatoData.parse(linha.child(1).text());
+                    dataFim = formatoData.parse(linha.child(2).text());
+                } catch (ParseException e) {
+                    ///
+                }
+
+                final long id = Long.parseLong(linha.child(4).child(0).attr("onclick").split("'")[11]);
+
+                final Questionario questionario = new Questionario(id, titulo, dataInicio, dataFim, disciplina);
+                questionarios.add(questionario);
+            }
+        } catch (Exception e) {
+            ///
+        }
+
+        return questionarios;
     }
 
     //TODO: Essa é provavelmente a pior maneira pra fazer isso, o importante é que funciona por enquanto. Tenho que algum dia encontrar uma maneira melhor para formatar corretamente o texto
