@@ -543,7 +543,7 @@ public class Parsers {
 
                 final long id = Long.parseLong(linha.child(4).child(0).attr("onclick").split("'")[11]);
 
-                final Questionario questionario = new Questionario(id, titulo, dataInicio, dataFim, disciplina);
+                final Questionario questionario = new Questionario(id, titulo, false, dataInicio, dataFim, disciplina); //TODO: Salvar se o questionário já foi enviado
                 questionarios.add(questionario);
             }
         } catch (Exception e) {

@@ -7,6 +7,7 @@ import okhttp3.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
@@ -32,6 +33,9 @@ public class Sessao {
 
         client = new OkHttpClient.Builder()
                 .addInterceptor(new Interceptor(context, this))
+                .connectTimeout(200, TimeUnit.SECONDS)
+                .writeTimeout(200, TimeUnit.SECONDS)
+                .readTimeout(600, TimeUnit.SECONDS)
                 .build();
     }
 
