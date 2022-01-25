@@ -30,6 +30,10 @@ public class Questionario {
         return enviado;
     }
 
+    public void setEnviado(boolean enviado) {
+        this.enviado = enviado;
+    }
+
     public Date getDataInicio() {
         return dataInicio;
     }

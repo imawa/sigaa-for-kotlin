@@ -6,7 +6,9 @@ import android.util.Log;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
@@ -128,8 +130,9 @@ public class Sessao {
     }
 
     /**
-     Acessa a página inicial e confere se o usuário está logado
-     @return true se logado; false se deslogado ou acontecer alguma exceçaõ
+     * Acessa a página inicial e confere se o usuário está logado
+     *
+     * @return true se logado; false se deslogado ou acontecer alguma exceçaõ
      */
     public boolean conferirUsuarioLogado() {
         try {
@@ -147,10 +150,12 @@ public class Sessao {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     Loga a sessão atual
-     @return true se logar; false se não logar
-     @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
+     * Loga a sessão atual
+     *
+     * @return true se logar; false se não logar
+     * @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
      */
     public boolean login(final String usuario, final String senha) throws IOException {
         //JSESSIONID TODO: Acredito que dá para tirar isso aqui do JSESSIONID, enviar o post de logar direto e pegar o JSESSIONID depois
@@ -223,7 +228,7 @@ public class Sessao {
         }
 
         //Usuário não é um discente
-        if(urlRedirecionado.contains(url_base + "/sigaa/vinculos.jsf") || urlRedirecionado.contains(url_base + "/sigaa/verMenuPrincipal.do")) {
+        if (urlRedirecionado.contains(url_base + "/sigaa/vinculos.jsf") || urlRedirecionado.contains(url_base + "/sigaa/verMenuPrincipal.do")) {
             System.out.println(TAG + "login() usuário não é um discente");
             JSESSIONID = null;
             return false;
@@ -256,7 +261,7 @@ public class Sessao {
     }
 
     /**
-     Desloga a sessão atual (apaga o cookie e o usuário salvo)
+     * Desloga a sessão atual (apaga o cookie e o usuário salvo)
      */
     public void deslogar() {
         JSESSIONID = null;
@@ -272,9 +277,11 @@ public class Sessao {
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     Obtém todas as disciplinas que aparecem em [URL]/sigaa/portais/discente/turmas.jsf
-     @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
+     * Obtém todas as disciplinas que aparecem em [URL]/sigaa/portais/discente/turmas.jsf
+     *
+     * @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
      */
     public ArrayList<Disciplina> pegarTodasDisciplinas() throws IOException {
         final Response responsePgTurmas = get("/sigaa/portais/discente/turmas.jsf");
@@ -288,8 +295,9 @@ public class Sessao {
     }
 
     /**
-     Retorna os identificadores dos períodos que podem ser utilizados no pegarBodyBoletim(periodo)
-     @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
+     * Retorna os identificadores dos períodos que podem ser utilizados no pegarBodyBoletim(periodo)
+     *
+     * @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
      */
     public ArrayList<String> pegarListaPeriodosBoletim() throws IOException {
         ArrayList<String> periodos = new ArrayList<>();
@@ -328,10 +336,12 @@ public class Sessao {
     }
 
     //TODO: Não cheguei a testar pra quando só tem 1 boletim
+
     /**
-     Retorna o body (HTML) do boletim do período inserido
-     @param periodo representa a identificação do período. A lista de períodos pode ser obtida com pegarListaPeriodosBoletim()
-     @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
+     * Retorna o body (HTML) do boletim do período inserido
+     *
+     * @param periodo representa a identificação do período. A lista de períodos pode ser obtida com pegarListaPeriodosBoletim()
+     * @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
      */
     public String pegarBodyBoletim(String periodo) throws IOException {
         //Página principal
@@ -360,7 +370,7 @@ public class Sessao {
         Document docBoletins = Jsoup.parse(responseBoletins.body().string());
         if (!usuarioLogado(docBoletins)) throw new IOException("sessão expirada");
 
-        if(docBoletins.getElementsByAttributeValue("title", "Selecionar Ano Escolar").size() > 0) {
+        if (docBoletins.getElementsByAttributeValue("title", "Selecionar Ano Escolar").size() > 0) {
             //Abriu a página para seleção de boletim (quando tem mais de 1)
             Log.d(TAG, "pegarBodyBoletim: lista de boletins");
             //Página do boletim em questão
@@ -517,7 +527,28 @@ public class Sessao {
         if (d == null) return new ArrayList<>();
 
         Document docQuestionarios = disciplinaAcessarBotaoMenu(d, idBotaoDocumento.DISC_VER_QUESTIONARIOS);
-        return Parsers.paginaDisciplinaQuestionarios(docQuestionarios, d);
+        ArrayList<Questionario> questionarios = Parsers.paginaDisciplinaQuestionarios(docQuestionarios, d);
+
+        Date dataAtual = new Date();
+        for (int i = 0; i < questionarios.size(); i++) {
+            if (questionarios.get(i).getDataInicio().before(dataAtual) && questionarios.get(i).getDataFim().after(dataAtual)) {
+                Response responseQuestionario = disciplinaAbrirEnvioQuestionario(questionarios.get(i), d);
+                if (!respostaValida(responseQuestionario)) {
+                    throw new IOException("disciplinaPegarQuestionarios() resposta inválida / SIGAA em manutenção");
+                }
+
+                Document docQuestionario = Jsoup.parse(responseQuestionario.body().string());
+                if (!usuarioLogado(docQuestionario)) {
+                    throw new IOException("disciplinaPegarQuestionarios() sessão expirada");
+                }
+
+                if (Parsers.paginaQuestionarioIsRespondido(docQuestionario)) {
+                    questionarios.get(i).setEnviado(true);
+                }
+            }
+        }
+
+        return questionarios;
     }
 
     public ArrayList<Tarefa> disciplinaPegarTarefas(Disciplina d) throws IOException {
@@ -565,6 +596,32 @@ public class Sessao {
 
             return post("/sigaa/portais/discente/discente.jsf#", bodyTarefa);
         }
+    }
+
+    private Response disciplinaAbrirEnvioQuestionario(Questionario questionario, Disciplina disciplina) throws IOException {
+        if (questionario == null || disciplina == null) {
+            return null;
+        }
+
+        final Response responsePgDiscente = get("/sigaa/portais/discente/discente.jsf");
+        if (!respostaValida(responsePgDiscente)) {
+            throw new IOException("disciplinaAbrirEnvioQuestionario() resposta inválida / SIGAA em manutenção");
+        }
+
+        Document docPgDiscente = Jsoup.parse(responsePgDiscente.body().string());
+        if (!usuarioLogado(docPgDiscente)) {
+            throw new IOException("disciplinaAbrirEnvioTarefa() sessão expirada");
+        }
+
+        FormBody bodyQuestionario = new FormBody.Builder()
+                .add("formAtividades", "formAtividades")
+                .add("javax.faces.ViewState", javaxViewState(docPgDiscente))
+                .add("formAtividades:visualizarQuestionarioTurmaVirtual", "formAtividades:visualizarQuestionarioTurmaVirtual")
+                .add("id", Long.toString(questionario.getId()))
+                .add("idTurma", (disciplina.isRetiradoDaPaginaTodasTurmasVirtuais()) ? disciplina.getId() : "31464") //Por enquanto, não tem problema utilizar o id de uma turma pública, mas acho que é mais garantido futuramente só pegar as disciplinas da página com todas
+                .build();
+
+        return post("/sigaa/portais/discente/discente.jsf#", bodyQuestionario);
     }
 
     //Obtem o form de uma tarefa, que é usado pra enviar a tarefa
@@ -736,10 +793,12 @@ public class Sessao {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     Utilizado para baixar algum arquivo do SIGAA (retorna uma classe com o nome e bytes do arquivo)
-     @param a pode ser obtido ao consultar a lista de arquivos de uma disciplina
-     @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
+     * Utilizado para baixar algum arquivo do SIGAA (retorna uma classe com o nome e bytes do arquivo)
+     *
+     * @param a pode ser obtido ao consultar a lista de arquivos de uma disciplina
+     * @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
      */
     public Arquivo disciplinaBaixarArquivo(InfoArquivo a) throws IOException {
         if (a == null) return null;
@@ -763,9 +822,10 @@ public class Sessao {
     }
 
     /**
-     Utilizado para baixar algum arquivo do SIGAA (retorna uma classe com o nome e bytes do arquivo)
-     @param a é o anexo de alguma aula, que pode ser obtida ao consultar as aulas de alguma disciplina
-     @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
+     * Utilizado para baixar algum arquivo do SIGAA (retorna uma classe com o nome e bytes do arquivo)
+     *
+     * @param a é o anexo de alguma aula, que pode ser obtida ao consultar as aulas de alguma disciplina
+     * @throws IOException se acontecer algum problema por parte da api ou a internet não estiver disponível
      */
     public Arquivo disciplinaBaixarArquivo(AnexoInfoArquivo a) throws IOException {
         if (a == null) return null;
@@ -780,13 +840,13 @@ public class Sessao {
                 .add("id", a.getId())
                 .build();
 
-            Response responseArquivo = post("/sigaa/ava/index.jsf", bodyAq);
+        Response responseArquivo = post("/sigaa/ava/index.jsf", bodyAq);
 
-            String nomeArquivo = responseArquivo.header("Content-Disposition").split("filename=\"")[1];
-            nomeArquivo = nomeArquivo.substring(0, nomeArquivo.length() - 1);
-            byte[] bytes = IOUtils.toByteArray(responseArquivo.body().byteStream());
+        String nomeArquivo = responseArquivo.header("Content-Disposition").split("filename=\"")[1];
+        nomeArquivo = nomeArquivo.substring(0, nomeArquivo.length() - 1);
+        byte[] bytes = IOUtils.toByteArray(responseArquivo.body().byteStream());
 
-            return new Arquivo(nomeArquivo, bytes);
+        return new Arquivo(nomeArquivo, bytes);
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

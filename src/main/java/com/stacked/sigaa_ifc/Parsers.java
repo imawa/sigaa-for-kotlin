@@ -1,5 +1,7 @@
 package com.stacked.sigaa_ifc;
 
+import android.util.Log;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,13 +26,13 @@ public class Parsers {
     //**0** ETC
     static protected FormBody paginaAvisoSkipBody(Document d) {
         Element btContinuar = null;
-        for(Element e : d.getElementsByTag("input")) {
-            if(e.attr("value").equals("Continuar >>")) {
+        for (Element e : d.getElementsByTag("input")) {
+            if (e.attr("value").equals("Continuar >>")) {
                 btContinuar = e;
             }
         }
 
-        if(btContinuar != null) {
+        if (btContinuar != null) {
             final FormBody body_aviso = new FormBody.Builder()
                     .add(btContinuar.attr("name").split(":")[0], btContinuar.attr("name").split(":")[0])
                     .add(btContinuar.attr("name"), "Continuar >>")
@@ -48,7 +50,7 @@ public class Parsers {
         ArrayList<Disciplina> disciplinas = new ArrayList<Disciplina>();
 
         int n = 0;
-        for(Element e : d.body().getElementsByClass("descricao")) {
+        for (Element e : d.body().getElementsByClass("descricao")) {
             Element _e = e.child(0).child(1);
             String periodo = d.getElementsByClass("periodo-atual").get(0).child(0).text(); //TODO: Isso funciona?
 
@@ -81,6 +83,7 @@ public class Parsers {
 
         return u;
     }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,20 +191,20 @@ public class Parsers {
          */
         Elements listaParticipantes = d.getElementsByClass("participantes");
 
-        for(int listaP = 0; listaP < listaParticipantes.size(); listaP++) {
+        for (int listaP = 0; listaP < listaParticipantes.size(); listaP++) {
             int tipo = (listaParticipantes.get(listaP).previousElementSibling().child(0).text().contains("Docente")) ? 1 : 0;
 
             Element listaUsuarios = listaParticipantes.get(listaP).getElementsByTag("tbody").get(0);
             //Linhas (1-2 usuarios)
-            for(Element linha : listaUsuarios.getElementsByTag("tr")) {
+            for (Element linha : listaUsuarios.getElementsByTag("tr")) {
                 //System.out.println(Sessao.TAG + linha);
                 //System.out.println(Sessao.TAG + listaUsuarios.getElementsByTag("tr").size());
 
-                for(Element elementosUsuariosLinha : linha.getAllElements()) {
+                for (Element elementosUsuariosLinha : linha.getAllElements()) {
                     //valign="top" -> elemento com informações do usuário
                     //em cima do valign="top" -> avatar
                     //em baixo do valign="top" -> botão de mensagem
-                    if(elementosUsuariosLinha.attr("valign").equals("top")) {
+                    if (elementosUsuariosLinha.attr("valign").equals("top")) {
                         Element eAvatar = elementosUsuariosLinha.previousElementSibling();
                         Element eInformacoes = elementosUsuariosLinha;
 
@@ -209,18 +212,19 @@ public class Parsers {
                         String nome = eInformacoes.getElementsByTag("strong").text();
                         String usuario = "", email = "";
                         Integer matricula = 0;
-                        for(Element e : eInformacoes.getElementsByTag("em")) {
-                            if(e.previousSibling().outerHtml().contains("Usuário")) {
+                        for (Element e : eInformacoes.getElementsByTag("em")) {
+                            if (e.previousSibling().outerHtml().contains("Usuário")) {
                                 usuario = e.text();
-                            } else if(e.previousSibling().outerHtml().toLowerCase().contains("e-mail")) { //Docente é E-[M]ail, o de discente é E-[m]ail. SIGAA, oi????
+                            } else if (e.previousSibling().outerHtml().toLowerCase().contains("e-mail")) { //Docente é E-[M]ail, o de discente é E-[m]ail. SIGAA, oi????
                                 email = e.text();
-                            } else if(e.previousSibling().outerHtml().contains("Matrícula")) {
+                            } else if (e.previousSibling().outerHtml().contains("Matrícula")) {
                                 matricula = Integer.parseInt(e.text());
                             }
                         }
                         //System.out.println(Sessao.TAG + tipo +" " + nome + " " + usuario + " " + email + " " + matricula);
                         Participante _u = new Participante(tipo, nome, usuario, url_avatar, email);
-                        if(matricula != 0) _u.definirMatricula(matricula); //Só discentes possuem matrícula aqui
+                        if (matricula != 0)
+                            _u.definirMatricula(matricula); //Só discentes possuem matrícula aqui
                         participantes.add(_u);
                     }
                 }
@@ -234,9 +238,10 @@ public class Parsers {
     static protected ArrayList<Nota> paginaNotasDisciplinaNotas(Document d, Disciplina disc) {
         ArrayList<Nota> notas = new ArrayList<Nota>();
 
-        if(d.body().getElementById("trAval") == null || (d.body().getElementsByClass("linhaPar").size() == 0 && d.body().getElementsByClass("linhaImpar").size() == 0)) return notas; //Notas vazias (provavelmente nem foi pra página certa)
+        if (d.body().getElementById("trAval") == null || (d.body().getElementsByClass("linhaPar").size() == 0 && d.body().getElementsByClass("linhaImpar").size() == 0))
+            return notas; //Notas vazias (provavelmente nem foi pra página certa)
 
-      //  System.out.println("1");
+        //  System.out.println("1");
         final Element linhaInfoAval = d.body().getElementById("trAval");
         final Element linhaNotaAval = (d.body().getElementsByClass("linhaPar").size() > 0) ? d.body().getElementsByClass("linhaPar").get(0) : d.body().getElementsByClass("linhaImpar").get(0);
         final Element linhaInfoPeriodo = linhaInfoAval.previousElementSibling();
@@ -244,13 +249,13 @@ public class Parsers {
         int index_periodo = 0, index_nota = 0; //pepriodo -> Trimestre, bimestre, etc... Esse período separa "Trimestre 1" de "Trimestre 1 - Reavaliação"
         //OBS: Talvez ter conferido por cada numero no linhaNotaAval teria sido melhor, mas acho que o próprio software pode calcular as médias parciais.... enfim, se for provado necessário eu corrijo isso
         //TODO: isso ta organizado ruim demais e eu me envergonho disso, pessoa que esta vendo meu codigo espaguete. tenho q dar uma ajeitada depois. o importante é que ta funcionando normalmente
-       // System.out.println("2");
-        for(Element e : linhaInfoAval.getAllElements()) {
+        // System.out.println("2");
+        for (Element e : linhaInfoAval.getAllElements()) {
             String periodo = "", abrev = "", descricao = "";
             float nota = 0, notaMax = 0, peso = 0;
             //  System.out.println(index_nota + " " + e.id());///
-            if(e.id().startsWith("aval_")) {
-               // System.out.println("3");
+            if (e.id().startsWith("aval_")) {
+                // System.out.println("3");
                 //Nota de algum trabalho, avaliação...
                 String id = e.id().split("_")[1];
                 //System.out.println("Debug API" + id);
@@ -261,78 +266,78 @@ public class Parsers {
                 for (int i = 0; i < 3; i++) {
                     Element x = _e.nextElementSibling();
                     if (x.id().contains(id)) {
-                    //    System.out.println("5");
+                        //    System.out.println("5");
                         if (x.id().startsWith("abrevAval_")) {
-                         //   System.out.println("4");
+                            //   System.out.println("4");
                             //Abreviacao
                             //   System.out.println("abrev");
                             abrev = (x.val() != null) ? x.val() : "";
                         } else if (x.id().startsWith("denAval_")) {
-                         //   System.out.println("6");
+                            //   System.out.println("6");
                             //Descricao
                             //      System.out.println("desc");
                             descricao = (x.val() != null) ? x.val() : "";
                             //   System.out.println(descricao);
                         } else if (x.id().startsWith("notaAval_")) {
-                     //       System.out.println("7");
+                            //       System.out.println("7");
                             //    System.out.println(x.val() + (x.val() != ""));
                             //Nota maxima
-                            notaMax = (x.val() != "") ? Float.parseFloat(x.val()) : -1 ;
+                            notaMax = (x.val() != "") ? Float.parseFloat(x.val()) : -1;
                         } else if (x.id().startsWith("pesoAval_")) {
-                       //     System.out.println("8");
+                            //     System.out.println("8");
                             //         System.out.println("peso");
                             //Peso
                             peso = (x.val() != "") ? Float.parseFloat(x.val()) : -1;
                         }
                     }
-               //     System.out.println("9");
+                    //     System.out.println("9");
                     _e = x;
                 }
 
                 //NOTA EM SI
                 //   System.out.println(index_nota);
                 //    System.out.println(linhaInfoPeriodo.child(index_periodo+2).text());
-              //  System.out.println("10");
-                periodo = linhaInfoPeriodo.child(index_periodo+2).text();
+                //  System.out.println("10");
+                periodo = linhaInfoPeriodo.child(index_periodo + 2).text();
                 //        System.out.println(linhaNotaAval.child(index_nota+2).text());
-            //    System.out.println("11");
+                //    System.out.println("11");
                 //  System.out.println(linhaNotaAval.child(index_nota+2).text().length() > 0);
-                if(!(linhaNotaAval.child(index_nota+2).text().length() > 0) || linhaNotaAval.child(index_nota+2).text() == "") {
+                if (!(linhaNotaAval.child(index_nota + 2).text().length() > 0) || linhaNotaAval.child(index_nota + 2).text() == "") {
                     nota = -1;
                 } else {
-                    if(!linhaNotaAval.child(index_nota+2).text().contains("-")) {
-                        nota = Float.parseFloat(linhaNotaAval.child(index_nota+2).text().replace(",", "."));
+                    if (!linhaNotaAval.child(index_nota + 2).text().contains("-")) {
+                        nota = Float.parseFloat(linhaNotaAval.child(index_nota + 2).text().replace(",", "."));
                     } else {
                         nota = -1;
                     }
                 }
-            //    System.out.println("12");
+                //    System.out.println("12");
                 notas.add(new Nota(disc, abrev, periodo, nota, notaMax, peso, descricao));
-             //   System.out.println("13");
+                //   System.out.println("13");
                 index_nota++;
-            } else if(e.id().contains("unid")) {
+            } else if (e.id().contains("unid")) {
                 //Nota final do periodo
                 //desculpa por acidentalmente ter feito o codigo assim, serio. algum dia eu arrumo
                 //        System.out.println(index_nota);
                 //      System.out.println(linhaInfoPeriodo.child(index_periodo+2).text());
-               // System.out.println("14");
+                // System.out.println("14");
                 //TODO: eh melhor eu conferir se isso nao eh null de uma vez pra n crashar
-                periodo = linhaInfoPeriodo.child(index_periodo+2).text();
+                periodo = linhaInfoPeriodo.child(index_periodo + 2).text();
                 //      System.out.println(linhaNotaAval.child(index_nota+2).text());
-               // System.out.println("15");
+                // System.out.println("15");
                 //todo: arrumar isso ali em cima e aqui dps
-                if(!(linhaNotaAval.child(index_nota+2).text().length() > 0) || linhaNotaAval.child(index_nota+2).text() == "") {
+                if (!(linhaNotaAval.child(index_nota + 2).text().length() > 0) || linhaNotaAval.child(index_nota + 2).text() == "") {
                     nota = -1;
                 } else {
-                    if(!linhaNotaAval.child(index_nota+2).text().contains("-")) {
-                        nota = Float.parseFloat(linhaNotaAval.child(index_nota+2).text().replace(",", "."));
+                    if (!linhaNotaAval.child(index_nota + 2).text().contains("-")) {
+                        nota = Float.parseFloat(linhaNotaAval.child(index_nota + 2).text().replace(",", "."));
                     } else {
                         nota = -1;
                     }
                 }
 
                 //System.out.println(periodo + " " + nota + " " + descricao);
-              //  System.out.println("16");
+                //  System.out.println("16");
                 notas.add(new Nota(disc, "Nota", periodo, nota, 10, 1, "Nota " + periodo)); //Me pergunto se 10 sempre é o maximo aqui....
                 index_nota++;
                 index_periodo++;
@@ -350,23 +355,25 @@ public class Parsers {
         ArrayList<Avaliacao> avaliacoes = new ArrayList<>();
 
         Element itensTabela = null;
-        if(d.getElementsByClass("listing").size() > 0 && d.getElementsByClass("listing").first().getElementsByTag("tbody").size() > 0) {
+        if (d.getElementsByClass("listing").size() > 0 && d.getElementsByClass("listing").first().getElementsByTag("tbody").size() > 0) {
             itensTabela = d.getElementsByClass("listing").first().getElementsByTag("tbody").first();
         } else return new ArrayList<>();
 
-        for(Element avaliacao : itensTabela.getElementsByTag("tr")) {
+        for (Element avaliacao : itensTabela.getElementsByTag("tr")) {
             long id = 0;
             String descricao = "";
             String dia = "", hora = "";
-            for(Element dado : avaliacao.getElementsByTag("td")) {
-                switch(dado.elementSiblingIndex()) {
+            for (Element dado : avaliacao.getElementsByTag("td")) {
+                switch (dado.elementSiblingIndex()) {
                     case 0:
                         dia = dado.text();
                         break;
 
                     case 1:
                         hora = dado.text().toLowerCase().replace("h", ":");
-                        if(hora.toLowerCase().charAt(hora.length() - 1) == ':') {hora += "00";}
+                        if (hora.toLowerCase().charAt(hora.length() - 1) == ':') {
+                            hora += "00";
+                        }
                         break;
 
                     case 2:
@@ -382,41 +389,45 @@ public class Parsers {
             }
 
             //TODO: conferir quando tiver oportunidade se eu nao ferrei a data disso aqui
-            if(hora.length() != 5 || hora.charAt(3) != ':') {
+            if (hora.length() != 5 || hora.charAt(3) != ':') {
                 hora = "00:00";
             }
             Date data = new Date();
             try {
                 data = Avaliacao.formato_data.parse(dia + " " + hora);
-            } catch (ParseException e) {e.printStackTrace();}
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
             Avaliacao _a = new Avaliacao(id, disc, data, descricao);
             avaliacoes.add(_a);
         }
         //document.getElementsByClassName("listing")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr")[0].getElementsByTagName("td")
         return avaliacoes;
     }
+
     //Pagina tarefas
     static protected ArrayList<Tarefa> paginaTarefasDisciplinaTarefas(Document d, String url_base, Disciplina disc) {
         ArrayList<Tarefa> tarefas = new ArrayList<Tarefa>();
 
-        if(d.getElementsByClass("listing").size() == 0) return tarefas; //Sem tabela -> sem tarefas/página errada
+        if (d.getElementsByClass("listing").size() == 0)
+            return tarefas; //Sem tabela -> sem tarefas/página errada
 
-        for(int i = 0; i < d.getElementsByClass("listing").get(0).children().size(); i++) {
-            if(d.getElementsByClass("listing").get(0).children().get(i).tagName() == "tbody") {
+        for (int i = 0; i < d.getElementsByClass("listing").get(0).children().size(); i++) {
+            if (d.getElementsByClass("listing").get(0).children().get(i).tagName() == "tbody") {
                 Element corpoTabela = d.getElementsByClass("listing").get(0).children().get(i);
 
                 //Cada tarefa ocupa 2 child do corpo. O primeiro é informações, o segundo é somente a descrição
                 //0o = 0,1. 1o = 2,3. 2o = 4,5.
-                int quantidadeTarefas = (corpoTabela.children().size())/2;
-                for(int j = 0; j < quantidadeTarefas; j++) {
-                    if(corpoTabela.children().get(j*2) == null || corpoTabela.children().get(j*2+1) == null) {
+                int quantidadeTarefas = (corpoTabela.children().size()) / 2;
+                for (int j = 0; j < quantidadeTarefas; j++) {
+                    if (corpoTabela.children().get(j * 2) == null || corpoTabela.children().get(j * 2 + 1) == null) {
                         System.out.println(Sessao.TAG + "Não foi possível parsar uma tarefa");
                         continue;
                     }
 
                     Tarefa t;
-                    Element linhaInformacao = corpoTabela.children().get(j*2);
-                    Element linhaDescricao = corpoTabela.children().get(j*2+1);
+                    Element linhaInformacao = corpoTabela.children().get(j * 2);
+                    Element linhaDescricao = corpoTabela.children().get(j * 2 + 1);
 
                     //Informacoes
                     String titulo = linhaInformacao.children().get(1).text();
@@ -430,12 +441,14 @@ public class Parsers {
                     try {
                         inicio = Tarefa.formato_data.parse(datas[1] + " " + datas[3]);
                         fim = Tarefa.formato_data.parse(datas[5] + " " + datas[7]);
-                    } catch (ParseException e) {e.printStackTrace();}
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
 
                     String id = "", j_id = "", j_idEnviar = "", j_idVisualizar = "";
                     boolean enviavel = (inicio.compareTo(new Date()) * new Date().compareTo(fim) > 0) && (linhaInformacao.children().get(5).children().size() == 1);
-                    if(linhaInformacao.children().get(5).children().size() == 1) {
-                     //   System.out.println("\n");
+                    if (linhaInformacao.children().get(5).children().size() == 1) {
+                        //   System.out.println("\n");
                         String[] x = linhaInformacao.children().get(5).children().get(0).attr("onclick").split("'");
 
                         id = x[11];
@@ -443,7 +456,7 @@ public class Parsers {
                         j_idEnviar = x[5].replace(j_id + ":", "");
                     }
                     boolean enviada = (linhaInformacao.children().get(6).children().size() == 1);
-                    if(enviada) {
+                    if (enviada) {
                         System.out.println("\n");
                         String[] x = linhaInformacao.children().get(6).children().get(0).attr("onclick").split("'");
 
@@ -456,8 +469,8 @@ public class Parsers {
                     //Descricao e arquivo
                     //System.out.println(">>> " + corrigida + " " + titulo + " " + envios + " " + enviavel + " " + enviada + " " + tarefa.formato_data.format(inicio) + " " + tarefa.formato_data.format(fim));
                     String descricao = "", url_arquivo = "";
-                    for(Element paragrafo : linhaDescricao.children().get(0).children()) {
-                        if(paragrafo.text().equals("Baixar arquivo")) {
+                    for (Element paragrafo : linhaDescricao.children().get(0).children()) {
+                        if (paragrafo.text().equals("Baixar arquivo")) {
                             //Arquivo
                             url_arquivo = ((!url_base.startsWith("http://") && !url_base.startsWith("https://")) ? "http://" : "") + url_base + paragrafo.attr("href");
                         } else {
@@ -467,10 +480,10 @@ public class Parsers {
                     }
 
                     t = new Tarefa(disc, titulo, descricao, inicio, fim, envios, enviavel, enviada, corrigida);
-                    if(url_arquivo != "") t.setUrlArquivo(url_arquivo);
-                    if(enviavel || enviada) t.definirIds(id, j_id);
-                    if(enviavel) t.setIdEnvio(j_idEnviar);
-                    if(enviada) t.setIdVisualizacao(j_idVisualizar);
+                    if (url_arquivo != "") t.setUrlArquivo(url_arquivo);
+                    if (enviavel || enviada) t.definirIds(id, j_id);
+                    if (enviavel) t.setIdEnvio(j_idEnviar);
+                    if (enviada) t.setIdVisualizacao(j_idVisualizar);
 
                     t.setId(id);//////
 
@@ -483,39 +496,39 @@ public class Parsers {
 
     static protected EnvioTarefa paginaTarefaEnvioTarefa(Document d, Tarefa t, String url_base) {
         Elements campos = d.getElementsByClass("campo");
-        if(campos.size() > 0) {
+        if (campos.size() > 0) {
             EnvioTarefa e = new EnvioTarefa(t);
-         for(Element c : campos) {
-             if(c.previousElementSibling().text().equals("Arquivo:")) {
-                 //Arquivo enviado pelo discente
-                 String urlArquivo = ((!url_base.startsWith("http://") && !url_base.startsWith("https://")) ? "http://" : "") + url_base + c.child(0).attr("href");
-                 e.setUrlArquivo(urlArquivo);
-             //    System.out.println(Sessao.TAG + urlArquivo);
-             } else if(c.previousElementSibling().text().equals("Resposta:")) {
-                 //Resposta do discente
-                 String resposta = formatarTextoDoElemento(c);
-                 e.setResposta(resposta);
-               //  System.out.println(Sessao.TAG + resposta);
-             } else if(c.previousElementSibling().text().equals("Comentários:")) {
-                 //Comentários do discente ou docente
-                 Element legenda = c.parent().parent().parent().getElementsByTag("legend").first();
-                 if(legenda.text().equals("Resposta enviada")) {
-                    //Discente
-                     String comentariosDiscente = formatarTextoDoElemento(c);
-                     e.setComentariosDiscente(comentariosDiscente);
-                   //  System.out.println(Sessao.TAG + comentariosDiscente);
-                 } else {
-                     //Docente
-                     String comentariosDocente = formatarTextoDoElemento(c);
-                     e.setComentariosDocente(comentariosDocente);
-                  //   System.out.println(Sessao.TAG + comentariosDocente);
-                 }
-             } else if(c.previousElementSibling().text().equals("Nota:")) {
-                 //Nota
-                 float nota = Float.parseFloat((c.text()).replace(",", "."));
-                 e.setNota(nota);
-              //   System.out.println(Sessao.TAG + nota);
-             }
+            for (Element c : campos) {
+                if (c.previousElementSibling().text().equals("Arquivo:")) {
+                    //Arquivo enviado pelo discente
+                    String urlArquivo = ((!url_base.startsWith("http://") && !url_base.startsWith("https://")) ? "http://" : "") + url_base + c.child(0).attr("href");
+                    e.setUrlArquivo(urlArquivo);
+                    //    System.out.println(Sessao.TAG + urlArquivo);
+                } else if (c.previousElementSibling().text().equals("Resposta:")) {
+                    //Resposta do discente
+                    String resposta = formatarTextoDoElemento(c);
+                    e.setResposta(resposta);
+                    //  System.out.println(Sessao.TAG + resposta);
+                } else if (c.previousElementSibling().text().equals("Comentários:")) {
+                    //Comentários do discente ou docente
+                    Element legenda = c.parent().parent().parent().getElementsByTag("legend").first();
+                    if (legenda.text().equals("Resposta enviada")) {
+                        //Discente
+                        String comentariosDiscente = formatarTextoDoElemento(c);
+                        e.setComentariosDiscente(comentariosDiscente);
+                        //  System.out.println(Sessao.TAG + comentariosDiscente);
+                    } else {
+                        //Docente
+                        String comentariosDocente = formatarTextoDoElemento(c);
+                        e.setComentariosDocente(comentariosDocente);
+                        //   System.out.println(Sessao.TAG + comentariosDocente);
+                    }
+                } else if (c.previousElementSibling().text().equals("Nota:")) {
+                    //Nota
+                    float nota = Float.parseFloat((c.text()).replace(",", "."));
+                    e.setNota(nota);
+                    //   System.out.println(Sessao.TAG + nota);
+                }
             }
             return e;
         }
@@ -529,7 +542,7 @@ public class Parsers {
             final SimpleDateFormat formatoData = new SimpleDateFormat("dd/MM/yyyy HH:mm");
             final Element bodyTabela = d.getElementsByClass("listing").get(0).child(1);
 
-            for(Element linha : bodyTabela.getElementsByTag("tr")) {
+            for (Element linha : bodyTabela.getElementsByTag("tr")) {
                 final String titulo = linha.child(0).text();
 
                 Date dataInicio = new Date();
@@ -553,16 +566,31 @@ public class Parsers {
         return questionarios;
     }
 
+    static protected boolean paginaQuestionarioIsRespondido(Document document) {
+        boolean respondido = false;
+
+        try {
+            final Elements inputRespondido = document.getElementsByAttributeValue("value", "Visualizar Resultado");
+            if (inputRespondido.size() > 0) {
+                respondido = true;
+            }
+        } catch (Exception e) {
+            ///
+        }
+
+        return respondido;
+    }
+
     //TODO: Essa é provavelmente a pior maneira pra fazer isso, o importante é que funciona por enquanto. Tenho que algum dia encontrar uma maneira melhor para formatar corretamente o texto
     static protected String formatarTextoDoElemento(Element e) {
         String texto = "";
 
-        for(int i = 0; i < e.childNodes().size(); i++) {
+        for (int i = 0; i < e.childNodes().size(); i++) {
             Document d = Jsoup.parse(e.childNodes().get(i).toString());
 
             texto += d.text();
 
-            if(i+1 < e.childNodes().size() && (d.getElementsByTag("p").size() > 0 || d.getElementsByTag("br").size() > 0)) {
+            if (i + 1 < e.childNodes().size() && (d.getElementsByTag("p").size() > 0 || d.getElementsByTag("br").size() > 0)) {
                 texto += "\n";
             }
         }
@@ -576,10 +604,10 @@ public class Parsers {
         Element bodyTabela = d.getElementsByClass("listagem").get(0).getElementsByTag("tbody").get(1);
 
         String periodoAtual = "";
-        for(Element e : bodyTabela.children()) {
-            if(e.className().equals("destaque no-hover")) {
+        for (Element e : bodyTabela.children()) {
+            if (e.className().equals("destaque no-hover")) {
                 periodoAtual = e.text();
-            } else if(e.className().equals("linhaPar") || e.className().equals("linhaImpar")) {
+            } else if (e.className().equals("linhaPar") || e.className().equals("linhaImpar")) {
                 String nome = e.child(0).text();
                 String botaoAcessoOnClick = e.getElementsByTag("a").get(0).attr("onclick");
 
@@ -593,37 +621,37 @@ public class Parsers {
         ArrayList<Aula> aulas = new ArrayList<>();
 
         Elements topicosAula = d.getElementsByClass("topico-aula");
-        for(Element topico : topicosAula) {
+        for (Element topico : topicosAula) {
             String titulo = topico.getElementsByClass("titulo").get(0).text();
             Element conteudo = topico.getElementsByClass("conteudotopico").get(0);
 
             Elements anexos = conteudo.getElementsByClass("item");
-            for(Element e : conteudo.getElementsByClass("item")) {
+            for (Element e : conteudo.getElementsByClass("item")) {
                 e.parent().remove();
             }
 
             Aula aula = new Aula(disciplina, titulo, conteudo.html());
             //TODO: Anexos
-            for(Element a : anexos) {
-                String[] iconeArquivos = {"/sigaa/img/porta_arquivos/icones/zip.png","/sigaa/img/porta_arquivos/icones/pdf.png","/sigaa/img/porta_arquivos/icones/ppt.png", "/sigaa/img/porta_arquivos/icones/doc.png", "/sigaa/img/porta_arquivos/icones/html.png", "/sigaa/img/porta_arquivos/icones/imagem.png", "/sigaa/img/porta_arquivos/icones/txt.png", "/sigaa/img/porta_arquivos/icones/desconhecido.png"};
+            for (Element a : anexos) {
+                String[] iconeArquivos = {"/sigaa/img/porta_arquivos/icones/zip.png", "/sigaa/img/porta_arquivos/icones/pdf.png", "/sigaa/img/porta_arquivos/icones/ppt.png", "/sigaa/img/porta_arquivos/icones/doc.png", "/sigaa/img/porta_arquivos/icones/html.png", "/sigaa/img/porta_arquivos/icones/imagem.png", "/sigaa/img/porta_arquivos/icones/txt.png", "/sigaa/img/porta_arquivos/icones/desconhecido.png"};
                 String[] iconeHref = {"/sigaa/img/portal_turma/site_add.png", "/sigaa/img/portal_turma/video.png"};
 
-                for(Element img : a.getElementsByTag("img")) {
-                    if(img.attr("src").equals("/sigaa/img/indicator.gif")) continue;
+                for (Element img : a.getElementsByTag("img")) {
+                    if (img.attr("src").equals("/sigaa/img/indicator.gif")) continue;
 
-                    if(Arrays.asList(iconeArquivos).contains(img.attr("src"))) {
+                    if (Arrays.asList(iconeArquivos).contains(img.attr("src"))) {
                         //(download de um arquivo apos request)
                         aula.adicionarAnexo(new AnexoInfoArquivo(aula, a.text(), a.getElementsByTag("a").get(0).attr("onclick").split("'")[5], a.getElementsByTag("a").get(0).attr("onclick").split("'")[11]));
-                    } else if(Arrays.asList(iconeHref).contains(img.attr("src"))) {
+                    } else if (Arrays.asList(iconeHref).contains(img.attr("src"))) {
                         //(abre algum url)
-                        if(a.getElementsByTag("iframe").size() > 0) {
+                        if (a.getElementsByTag("iframe").size() > 0) {
                             //VIDEO EMBED
                             aula.adicionarAnexo(new AnexoSite(aula, a.getElementsByTag("h1").get(0).text(), a.getElementsByTag("iframe").get(0).attr("src")));
                         } else {
                             //LINK
                             aula.adicionarAnexo(new AnexoSite(aula, a.getElementsByTag("a").get(0).text(), a.getElementsByTag("a").get(0).attr("href")));
                         }
-                    } else if(img.attr("src").equals("/sigaa/img/porta_arquivos/icones/tarefa.png")) {
+                    } else if (img.attr("src").equals("/sigaa/img/porta_arquivos/icones/tarefa.png")) {
                         //System.out.println(Sessao.TAG + "Tarefa");
                         //(abre a pagina da tarefa)
 
@@ -634,12 +662,14 @@ public class Parsers {
                         Date fim = new Date();
                         try {
                             //public static SimpleDateFormat formato_data = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-                            String sInicio = (datas[2] + " " + "000".substring(datas[4].replace("h", ":").length()) +  datas[4].replace("h", ":") + "00".substring(datas[5].length()) + datas[5]);
+                            String sInicio = (datas[2] + " " + "000".substring(datas[4].replace("h", ":").length()) + datas[4].replace("h", ":") + "00".substring(datas[5].length()) + datas[5]);
                             String sFim = (datas[9] + " " + "000".substring(datas[11].replace("h", ":").length()) + datas[11].replace("h", ":") + "00".substring(datas[12].length()) + datas[12]);
 
                             inicio = AnexoTarefa.formato_data.parse(sInicio);
                             fim = AnexoTarefa.formato_data.parse(sFim);
-                        } catch (ParseException e) {e.printStackTrace();}
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
                         boolean enviavel = (inicio.compareTo(new Date()) * new Date().compareTo(fim) > 0);
 
                         Element elA = a.getElementsByTag("a").get(0);
@@ -647,7 +677,7 @@ public class Parsers {
                         String id = elA.attr("onclick").split("'")[11];
 
                         aula.adicionarAnexo(new AnexoTarefa(aula, tituloAnexo, id, inicio, fim, enviavel));
-                    } else if(img.attr("src").equals("/sigaa/ava/img/questionario.png")) {
+                    } else if (img.attr("src").equals("/sigaa/ava/img/questionario.png")) {
                         System.out.println(Sessao.TAG + "Anexo não implementado: questionario");
                         //(abre o questionario)
                         /////////////todo 1
@@ -655,7 +685,7 @@ public class Parsers {
                         String tituloAnexo = elA.text();
 
                         aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
-                    } else if(img.attr("src").equals("/sigaa/ava/img/forumava.png")) {
+                    } else if (img.attr("src").equals("/sigaa/ava/img/forumava.png")) {
                         System.out.println(Sessao.TAG + "Anexo não implementado: fórum");
                         //(abre o forum)
                         /////////////todo 3
@@ -663,7 +693,7 @@ public class Parsers {
                         String tituloAnexo = elA.text();
 
                         aula.adicionarAnexo(new AnexoDesconhecido(aula, tituloAnexo));
-                    } else if(img.attr("src").equals("/sigaa/img/porta_arquivos/icones/conteudo.png")) {
+                    } else if (img.attr("src").equals("/sigaa/img/porta_arquivos/icones/conteudo.png")) {
                         System.out.println(Sessao.TAG + "Anexo não implementado: conteúdo");
                         //(abre a pagina visualização de conteudo na turma vritual)
                         /////////////todo 2
@@ -694,7 +724,7 @@ public class Parsers {
     static protected ArrayList<InfoArquivo> paginaDisciplinaArquivos(Document d, Disciplina disciplina) {
         ArrayList<InfoArquivo> infosArquivo = new ArrayList<>();
 
-        for(Element linha : d.getElementsByClass("listing").get(0).getElementsByTag("tbody").get(0).getElementsByTag("tr")) {
+        for (Element linha : d.getElementsByClass("listing").get(0).getElementsByTag("tbody").get(0).getElementsByTag("tr")) {
             infosArquivo.add(new InfoArquivo(disciplina, linha.getElementsByTag("td").get(0).text(), linha.getElementsByTag("a").get(0).attr("onclick").split("'")[5], linha.getElementsByTag("a").get(0).attr("onclick").split("'")[11]));
         }
 
