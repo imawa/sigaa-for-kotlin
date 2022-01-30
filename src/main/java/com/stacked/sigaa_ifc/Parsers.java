@@ -430,7 +430,7 @@ public class Parsers {
                     Element linhaDescricao = corpoTabela.children().get(j * 2 + 1);
 
                     //Informacoes
-                    String titulo = linhaInformacao.children().get(1).text();
+                    String titulo = linhaInformacao.children().get(1).text().trim();
                     int envios = Integer.parseInt(linhaInformacao.children().get(4).text());
 
                     //System.out.println(Sessao.TAG + titulo);
@@ -478,6 +478,7 @@ public class Parsers {
                             descricao += paragrafo.text() + "\n";
                         }
                     }
+                    descricao = descricao.trim();
 
                     t = new Tarefa(disc, titulo, descricao, inicio, fim, envios, enviavel, enviada, corrigida);
                     if (url_arquivo != "") t.setUrlArquivo(url_arquivo);
