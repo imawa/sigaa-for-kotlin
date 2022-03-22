@@ -2,6 +2,7 @@ package com.imawa.sigaaforkotlin
 
 import com.imawa.sigaaforkotlin.sigaa.Usuario
 import com.imawa.sigaaforkotlin.util.FormBuilder
+import com.imawa.sigaaforkotlin.util.HistoryManager
 import com.imawa.sigaaforkotlin.util.Parser
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
@@ -16,6 +17,8 @@ class SIGAA {
 
     private val formBuilder = FormBuilder()
     private val parser = Parser()
+
+    private val historyManager = HistoryManager(parser)
 
     var sessionId: String? = null
 
@@ -33,7 +36,8 @@ class SIGAA {
             requestBuilder.header("Cookie", "JSESSIONID=$sessionId")
         }
 
-        return client.newCall(requestBuilder.build()).execute()
+        historyManager.addToHistory(client.newCall(requestBuilder.build()).execute())
+        return historyManager.getLastResponse()
     }
 
     private fun networkPost(caminho: String, formBody: FormBody): Response {
@@ -44,7 +48,8 @@ class SIGAA {
             requestBuilder.addHeader("Cookie", "JSESSIONID=$sessionId")
         }
 
-        return client.newCall(requestBuilder.build()).execute()
+        historyManager.addToHistory(client.newCall(requestBuilder.build()).execute())
+        return historyManager.getLastResponse()
     }
 
     fun login(login: String, senha: String): Boolean {
@@ -75,30 +80,31 @@ class SIGAA {
         // Pular telas de aviso e de questionários
         if (location?.contains("telaAvisoLogon.jsf") == true || location?.contains("questionarios.jsf") == true) {
             Timber.d("Pulando aviso ou questionário")
-            responseLogin = getPortalDiscente()
+            getPortalDiscente()
         }
 
         // Conferir se logou
-        var bodyLogin = responseLogin.body!!.string()
-        if (!parser.getLogado(bodyLogin)) {
+        if (!parser.getLogado(historyManager.getLastPageBodyString())) {
             // Conferir o portal do discente
             Timber.d("Conferindo o login no portal do discente")
+            getPortalDiscente()
 
-            responseLogin = getPortalDiscente()
-            bodyLogin = responseLogin.body!!.string()
-
-            if (!parser.getLogado(bodyLogin)) {
+            if (!parser.getLogado(historyManager.getLastPageBodyString())) {
                 Timber.d("Não foi possível logar")
                 return false
             }
         }
 
-        usuario = parser.getUsuarioPortalDiscente(bodyLogin, login)
+        usuario = parser.getUsuarioPortalDiscente(historyManager.getLastPageBodyString(), login)
         Timber.d("Logado como ${usuario!!.nome}")
         return true
     }
 
-    private fun getPortalDiscente(): Response = networkGet("/verPortalDiscente.do")
+    private fun getPortalDiscente(): Response {
+        val response = networkGet("/verPortalDiscente.do")
+        historyManager.addToHistory(response)
+        return response
+    }
 
     companion object {
         const val urlBase = "https://sig.ifc.edu.br/sigaa"

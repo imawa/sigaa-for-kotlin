@@ -12,6 +12,11 @@ class Parser {
 
     fun getLocation(response: Response): String? = response.priorResponse?.header("Location")
 
+    fun getJavaxViewState(body: String): String? {
+        val document = Jsoup.parse(body)
+        return document.body().getElementById("javax.faces.ViewState")?.attr("value")
+    }
+
     fun getLogado(body: String): Boolean {
         val document = Jsoup.parse(body)
         return document.getElementsByClass("usuario").size > 0 || document.getElementById("painelDadosUsuario") != null
@@ -20,14 +25,20 @@ class Parser {
     fun getUsuarioPortalDiscente(body: String, login: String): Usuario {
         val document = Jsoup.parse(body)
 
-        val matricula = Integer.parseInt(document.body().getElementById("perfil-docente")!!.child(4).child(1).child(0).child(0).child(1).text())
+        val matricula = Integer.parseInt(
+            document.body().getElementById("perfil-docente")!!.child(4).child(1).child(0).child(0)
+                .child(1).text()
+        )
         val nome = document.body().getElementsByClass("nome")[0].text()
         val email = "" // O portal do discente não mostra o email completo
-        val urlAvatar = "${urlBase}${document.getElementsByClass("foto")[0].child(0).attr("src").removePrefix("/sigaa")}"
+        val urlAvatar = "${urlBase}${
+            document.getElementsByClass("foto")[0].child(0).attr("src").removePrefix("/sigaa")
+        }"
 
         // Disciplinas
         val disciplinasPeriodoAtual = ArrayList<Disciplina>()
-        val periodoAtual = document.getElementsByClass("periodo-atual")[0].getElementsByTag("strong")[0].text()
+        val periodoAtual =
+            document.getElementsByClass("periodo-atual")[0].getElementsByTag("strong")[0].text()
 
         for (element in document.body().getElementsByClass("descricao")) {
             val child = element.child(0).child(1)
@@ -39,7 +50,16 @@ class Parser {
             val formAcessarTurmaVirtualCompleto = outerHtmlArgs[5]
             val frontEndIdTurma = outerHtmlArgs[11]
 
-            disciplinasPeriodoAtual.add(Disciplina(id, nome, periodoAtual, formAcessarTurmaVirtual, formAcessarTurmaVirtualCompleto, frontEndIdTurma))
+            disciplinasPeriodoAtual.add(
+                Disciplina(
+                    id,
+                    nome,
+                    periodoAtual,
+                    formAcessarTurmaVirtual,
+                    formAcessarTurmaVirtualCompleto,
+                    frontEndIdTurma
+                )
+            )
         }
 
         return Usuario(login, matricula, nome, email, urlAvatar, disciplinasPeriodoAtual)
