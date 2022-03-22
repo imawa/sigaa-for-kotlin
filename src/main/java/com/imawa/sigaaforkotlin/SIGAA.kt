@@ -1,6 +1,7 @@
 package com.imawa.sigaaforkotlin
 
 import android.content.Context
+import com.imawa.sigaaforkotlin.models.Disciplina
 import com.imawa.sigaaforkotlin.models.Usuario
 import com.imawa.sigaaforkotlin.network.SIGAAFormBuilder
 import com.imawa.sigaaforkotlin.network.SIGAAHistoryManager
@@ -109,6 +110,11 @@ class SIGAA(context: Context) {
         sessionId = null
         usuario = null
         historyManager.clearHistory()
+    }
+
+    fun getAllDisciplinas(): ArrayList<Disciplina> {
+        networkGet("/sigaa/portais/discente/turmas.jsf")
+        return parser.getDisciplinasTodasAsTurmas(historyManager.getLastPageBodyString())
     }
 
     private fun getPortalDiscente(): Response {

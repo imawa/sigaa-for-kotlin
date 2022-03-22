@@ -64,4 +64,41 @@ class SIGAAParser {
 
         return Usuario(login, matricula, nome, email, urlAvatar, disciplinasPeriodoAtual)
     }
+
+    fun getDisciplinasTodasAsTurmas(body: String): ArrayList<Disciplina> {
+        val document = Jsoup.parse(body)
+        val bodyTabela = document.getElementsByClass("listagem")[0].getElementsByTag("tbody")[1]
+
+        var periodoAtual = ""
+        val disciplinas = ArrayList<Disciplina>()
+
+        for (linha in bodyTabela.children()) {
+            when (linha.className()) {
+                "linhaPar", "linhaImpar" -> {
+                    // Disciplina
+                    val nome = linha.child(0).text()
+                    val args = linha.getElementsByTag("a")[0].attr("onclick").split("'")
+                    val formAcessarTurmaVirtual = args[3]
+                    val formAcessarTurmaVirtualCompleto = args[5]
+                    val frontEndIdTurma = args[11]
+                    disciplinas.add(
+                        Disciplina(
+                            null,
+                            nome,
+                            periodoAtual,
+                            formAcessarTurmaVirtual,
+                            formAcessarTurmaVirtualCompleto,
+                            frontEndIdTurma
+                        )
+                    )
+                }
+                "destaque no-hover" -> {
+                    // Período
+                    periodoAtual = linha.text()
+                }
+            }
+        }
+
+        return disciplinas
+    }
 }
