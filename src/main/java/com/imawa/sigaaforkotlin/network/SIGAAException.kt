@@ -1,4 +1,4 @@
-package com.imawa.sigaaforkotlin.util
+package com.imawa.sigaaforkotlin.network
 
 class SIGAAException(message: String?) : Exception(message) {
     companion object {

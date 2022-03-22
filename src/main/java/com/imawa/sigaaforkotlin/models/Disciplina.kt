@@ -1,4 +1,4 @@
-package com.imawa.sigaaforkotlin.sigaa
+package com.imawa.sigaaforkotlin.models
 
 data class Disciplina(
     val id: String?, // Valor que só as disciplinas do https://sig.ifc.edu.br/sigaa/portais/discente/turmas.jsf possuem

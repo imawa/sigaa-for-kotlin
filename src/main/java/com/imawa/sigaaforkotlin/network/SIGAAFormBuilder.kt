@@ -1,8 +1,8 @@
-package com.imawa.sigaaforkotlin.util
+package com.imawa.sigaaforkotlin.network
 
 import okhttp3.FormBody
 
-class FormBuilder {
+class SIGAAFormBuilder {
     fun buildLoginForm(login: String, senha: String): FormBody =
         FormBody.Builder().add("dispatch", "logOn")
             .add("urlRedirect", "")

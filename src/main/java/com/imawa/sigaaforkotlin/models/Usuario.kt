@@ -1,4 +1,4 @@
-package com.imawa.sigaaforkotlin.sigaa
+package com.imawa.sigaaforkotlin.models
 
 data class Usuario(
     val login: String,

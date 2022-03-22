@@ -1,8 +1,8 @@
-package com.imawa.sigaaforkotlin.util
+package com.imawa.sigaaforkotlin.network
 
 import okhttp3.Response
 
-class HistoryManager(private val parser: Parser) {
+class SIGAAHistoryManager(private val parser: SIGAAParser) {
     var lastJavaxViewState: String? = null
 
     val responseHistory = ArrayList<Response>()

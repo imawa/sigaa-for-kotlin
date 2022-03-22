@@ -1,11 +1,11 @@
 package com.imawa.sigaaforkotlin
 
 import android.content.Context
-import com.imawa.sigaaforkotlin.sigaa.Usuario
-import com.imawa.sigaaforkotlin.util.FormBuilder
-import com.imawa.sigaaforkotlin.util.HistoryManager
-import com.imawa.sigaaforkotlin.util.Parser
-import com.imawa.sigaaforkotlin.util.SIGAAInterceptor
+import com.imawa.sigaaforkotlin.models.Usuario
+import com.imawa.sigaaforkotlin.network.SIGAAFormBuilder
+import com.imawa.sigaaforkotlin.network.SIGAAHistoryManager
+import com.imawa.sigaaforkotlin.network.SIGAAInterceptor
+import com.imawa.sigaaforkotlin.network.SIGAAParser
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -18,10 +18,10 @@ class SIGAA(context: Context) {
 
     var usuario: Usuario? = null
 
-    private val formBuilder = FormBuilder()
-    private val parser = Parser()
+    private val formBuilder = SIGAAFormBuilder()
+    private val parser = SIGAAParser()
 
-    private val historyManager = HistoryManager(parser)
+    private val historyManager = SIGAAHistoryManager(parser)
 
     private val client = OkHttpClient.Builder().addInterceptor(SIGAAInterceptor(context, parser))
         .connectTimeout(200, TimeUnit.SECONDS).writeTimeout(200, TimeUnit.SECONDS)

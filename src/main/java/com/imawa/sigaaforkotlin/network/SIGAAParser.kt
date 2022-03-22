@@ -1,12 +1,12 @@
-package com.imawa.sigaaforkotlin.util
+package com.imawa.sigaaforkotlin.network
 
 import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
-import com.imawa.sigaaforkotlin.sigaa.Disciplina
-import com.imawa.sigaaforkotlin.sigaa.Usuario
+import com.imawa.sigaaforkotlin.models.Disciplina
+import com.imawa.sigaaforkotlin.models.Usuario
 import okhttp3.Response
 import org.jsoup.Jsoup
 
-class Parser {
+class SIGAAParser {
     fun getSessionId(response: Response): String? =
         response.header("Set-Cookie")?.split("JSESSIONID=")?.get(1)?.split(";")?.get(0)
 
