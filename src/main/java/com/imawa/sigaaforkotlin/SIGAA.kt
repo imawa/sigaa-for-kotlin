@@ -113,7 +113,7 @@ class SIGAA(context: Context) {
     }
 
     fun getAllDisciplinas(): ArrayList<Disciplina> {
-        networkGet("/sigaa/portais/discente/turmas.jsf")
+        networkGet("/portais/discente/turmas.jsf")
         return parser.getDisciplinasTodasAsTurmas(historyManager.getLastPageBodyString())
     }
 
