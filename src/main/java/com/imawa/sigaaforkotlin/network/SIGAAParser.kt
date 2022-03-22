@@ -44,7 +44,7 @@ class SIGAAParser {
             val child = element.child(0).child(1)
             val outerHtmlArgs = child.outerHtml().split("'")
 
-            val id = null
+            val id = element.parent()!!.nextElementSibling()!!.child(0).id().replace("linha_", "")
             val nome = child.html()
             val formAcessarTurmaVirtual = outerHtmlArgs[3]
             val formAcessarTurmaVirtualCompleto = outerHtmlArgs[5]
