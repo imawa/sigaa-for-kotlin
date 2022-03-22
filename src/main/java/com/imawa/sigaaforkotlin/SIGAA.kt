@@ -1,9 +1,11 @@
 package com.imawa.sigaaforkotlin
 
+import android.content.Context
 import com.imawa.sigaaforkotlin.sigaa.Usuario
 import com.imawa.sigaaforkotlin.util.FormBuilder
 import com.imawa.sigaaforkotlin.util.HistoryManager
 import com.imawa.sigaaforkotlin.util.Parser
+import com.imawa.sigaaforkotlin.util.SIGAAInterceptor
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -11,18 +13,19 @@ import okhttp3.Response
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
-class SIGAA {
-    private val client = OkHttpClient.Builder().connectTimeout(200, TimeUnit.SECONDS)
-        .writeTimeout(200, TimeUnit.SECONDS).writeTimeout(600, TimeUnit.SECONDS).build()
+class SIGAA(context: Context) {
+    var sessionId: String? = null
+
+    var usuario: Usuario? = null
 
     private val formBuilder = FormBuilder()
     private val parser = Parser()
 
     private val historyManager = HistoryManager(parser)
 
-    var sessionId: String? = null
-
-    var usuario: Usuario? = null
+    private val client = OkHttpClient.Builder().addInterceptor(SIGAAInterceptor(context, parser))
+        .connectTimeout(200, TimeUnit.SECONDS).writeTimeout(200, TimeUnit.SECONDS)
+        .writeTimeout(600, TimeUnit.SECONDS).build()
 
     init {
         Timber.plant(Timber.DebugTree())
@@ -53,6 +56,7 @@ class SIGAA {
     }
 
     fun login(login: String, senha: String): Boolean {
+        historyManager.clearHistory()
         // Pegar novo sessionId
         sessionId = null
 
@@ -66,7 +70,7 @@ class SIGAA {
 
         // Logar sessionId
         val formLogin = formBuilder.buildLoginForm(login, senha)
-        var responseLogin =
+        val responseLogin =
             networkPost("/logar.do", formLogin)
 
         val location = parser.getLocation(responseLogin)
@@ -97,7 +101,14 @@ class SIGAA {
 
         usuario = parser.getUsuarioPortalDiscente(historyManager.getLastPageBodyString(), login)
         Timber.d("Logado como ${usuario!!.nome}")
+
         return true
+    }
+
+    fun logout() {
+        sessionId = null
+        usuario = null
+        historyManager.clearHistory()
     }
 
     private fun getPortalDiscente(): Response {

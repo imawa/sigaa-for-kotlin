@@ -27,6 +27,12 @@ class HistoryManager(private val parser: Parser) {
 
     fun getLastPageBodyString(): String = bodyStringHistory[bodyStringHistory.size - 1]
 
+    fun clearHistory() {
+        lastJavaxViewState = null
+        responseHistory.clear()
+        bodyStringHistory.clear()
+    }
+
     companion object {
         const val maximumHistorySize = 3
     }
