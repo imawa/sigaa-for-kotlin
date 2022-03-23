@@ -3,8 +3,11 @@ package com.imawa.sigaaforkotlin.network
 import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
 import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
+import com.imawa.sigaaforkotlin.models.Usuario.Companion.USUARIO_DISCENTE
+import com.imawa.sigaaforkotlin.models.Usuario.Companion.USUARIO_DOCENTE
 import okhttp3.Response
 import org.jsoup.Jsoup
 import java.text.SimpleDateFormat
@@ -72,7 +75,15 @@ class SIGAAParser {
             )
         }
 
-        return Usuario(login, matricula, nome, email, urlAvatar, disciplinasPeriodoAtual)
+        return Usuario(
+            login,
+            matricula,
+            nome,
+            email,
+            urlAvatar,
+            USUARIO_DISCENTE,
+            disciplinasPeriodoAtual
+        )
     }
 
     fun getDisciplinasTodasAsTurmas(body: String): ArrayList<Disciplina> {
@@ -125,6 +136,7 @@ class SIGAAParser {
 
         // Texto do botão em questão
         val textoBotao = when (pagina) {
+            PAGINA_PARTICIPANTES -> "Participantes"
             PAGINA_AVALIACOES -> "Avaliações"
             PAGINA_TAREFAS -> "Tarefas"
             PAGINA_QUESTIONARIOS -> "Questionários"
@@ -165,6 +177,57 @@ class SIGAAParser {
      */
     fun getCaminhoBotaoPortalDisciplina(body: String): String =
         Jsoup.parse(body).getElementById("form_nee")!!.attr("action").replace("/sigaa", "")
+
+    fun getParticipantesDisciplina(body: String): ArrayList<Usuario> {
+        val participantes = ArrayList<Usuario>()
+
+        val document = Jsoup.parse(body)
+
+        for (lista in document.getElementsByClass("participantes")) {
+            // A página possui uma lista de docentes e outra lista de participantes
+            val tipoUsuario =
+                if (lista.previousElementSibling()?.child(0)?.text()?.contains("Docente") == true) {
+                    USUARIO_DOCENTE
+                } else {
+                    USUARIO_DISCENTE
+                }
+
+            for (linha in lista.getElementsByTag("tr")) {
+                // Cada linha agrupa dois usuários
+                for (segundaColuna in linha.getElementsByAttributeValue("valign", "top")) {
+                    // A segunda coluna possui a maioria das informações de um usuário, e a
+                    // anterior sempre possui o avatar
+                    val nome = segundaColuna.getElementsByTag("strong").text().trim()
+                    val ems = segundaColuna.getElementsByTag("em")
+                    val matricula = if (tipoUsuario == USUARIO_DISCENTE) {
+                        ems[1].text().trim().toInt()
+                    } else {
+                        null
+                    }
+                    val login = ems[2].text().trim()
+                    val email = ems[3].text().trim()
+                    val urlAvatar = "${urlBase.replace("/sigaa", "")}${
+                        segundaColuna.previousElementSibling()!!
+                            .getElementsByTag("img")[0].attr("src")
+                    }"
+
+                    participantes.add(
+                        Usuario(
+                            login,
+                            matricula,
+                            nome,
+                            email,
+                            urlAvatar,
+                            tipoUsuario,
+                            ArrayList<Disciplina>()
+                        )
+                    )
+                }
+            }
+        }
+
+        return participantes
+    }
 
     fun getAvaliacoesDisciplina(body: String, disciplina: Disciplina): ArrayList<Avaliacao> {
         val avaliacoes = ArrayList<Avaliacao>()

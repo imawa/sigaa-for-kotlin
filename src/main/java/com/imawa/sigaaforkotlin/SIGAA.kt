@@ -3,6 +3,7 @@ package com.imawa.sigaaforkotlin
 import android.content.Context
 import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
 import com.imawa.sigaaforkotlin.network.SIGAAFormBuilder
@@ -130,6 +131,14 @@ class SIGAA(context: Context) {
     }
 
     /**
+     * Retorna os participantes da disciplina inserida
+     */
+    fun getParticipantes(disciplina: Disciplina): ArrayList<Usuario> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_PARTICIPANTES)
+        return parser.getParticipantesDisciplina(historyManager.getLastPageBodyString())
+    }
+
+    /**
      * Retorna as avaliações cadastradas na disciplina inserida
      */
     fun getAvaliacoes(disciplina: Disciplina): ArrayList<Avaliacao> {
@@ -150,14 +159,23 @@ class SIGAA(context: Context) {
      */
     fun getQuestionarios(disciplina: Disciplina): ArrayList<Questionario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_QUESTIONARIOS)
-        val questionarios = parser.getQuestionariosDisciplina(historyManager.getLastPageBodyString(), disciplina)
+        val questionarios =
+            parser.getQuestionariosDisciplina(historyManager.getLastPageBodyString(), disciplina)
 
         // Identificar se os questionários ainda abertos já foram enviados
         val dataAtual = Date()
 
-        for (questionario in questionarios.filter { it.dataInicio.before(dataAtual) and it.dataFim.after(dataAtual) }) {
+        for (questionario in questionarios.filter {
+            it.dataInicio.before(dataAtual) and it.dataFim.after(
+                dataAtual
+            )
+        }) {
             getPaginaQuestionario(questionario, disciplina)
-            questionarios[questionarios.indexOf(questionario)] = parser.getQuestionarioCompletoPaginaQuestionario(historyManager.getLastPageBodyString(), questionario)
+            questionarios[questionarios.indexOf(questionario)] =
+                parser.getQuestionarioCompletoPaginaQuestionario(
+                    historyManager.getLastPageBodyString(),
+                    questionario
+                )
         }
 
         return questionarios
@@ -235,14 +253,21 @@ class SIGAA(context: Context) {
     /**
      * Abre a página inicial do questionário inserido (a página com os botões de voltar e de iniciar o questionário)
      */
-    private fun getPaginaQuestionario(questionario: Questionario, disciplina: Disciplina): Response {
+    private fun getPaginaQuestionario(
+        questionario: Questionario,
+        disciplina: Disciplina
+    ): Response {
         // Abrir portal do discente
         Timber.d("Abrindo portal do discente")
         networkGet("/portais/discente/discente.jsf")
 
         // Abrir página do questionário
         Timber.d("Abrindo página do questionário ${questionario.titulo}")
-        val formBody = formBuilder.buildOpenPaginaQuestionarioPeloPortalDiscenteForm(questionario, disciplina, historyManager.lastJavaxViewState)
+        val formBody = formBuilder.buildOpenPaginaQuestionarioPeloPortalDiscenteForm(
+            questionario,
+            disciplina,
+            historyManager.lastJavaxViewState
+        )
         networkPost("/portais/discente/discente.jsf#", formBody)
 
         // Atualizar a disciplina aberta atualmente salva no historyManager
