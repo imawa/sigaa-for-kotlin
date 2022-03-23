@@ -17,6 +17,9 @@ class SIGAAParser {
     fun getSessionId(response: Response): String? =
         response.header("Set-Cookie")?.split("JSESSIONID=")?.get(1)?.split(";")?.get(0)
 
+    /**
+     * Retorna o URL para que o cliente foi redirecionado
+     */
     fun getLocation(response: Response): String? = response.priorResponse?.header("Location")
 
     fun getJavaxViewState(body: String): String? {
@@ -109,6 +112,11 @@ class SIGAAParser {
         return disciplinas
     }
 
+    /**
+     * Retorna os dois pares de String do botão no menu do portal da disciplina
+     * Ao clicar em um dos botões no menu da esquerda do portal da disciplina, são enviados dois
+     * pares de valores que indicam a página que deve ser aberta
+     */
     fun getArgsBotaoPortalDisciplina(body: String, pagina: Int): ArrayList<ArrayList<String>> {
         val document = Jsoup.parse(body)
 
@@ -150,6 +158,11 @@ class SIGAAParser {
         return arrayListOf(primeiroPar, segundoPar)
     }
 
+    /**
+     * Retorna o caminho do POST para um botão do menu na esquerda do portal da disciplina
+     * Conforme você navega pelo portal da disciplina através do menu da esquerda, esse caminho
+     * se altera
+     */
     fun getCaminhoBotaoPortalDisciplina(body: String): String =
         Jsoup.parse(body).getElementById("form_nee")!!.attr("action").replace("/sigaa", "")
 
@@ -283,6 +296,13 @@ class SIGAAParser {
         return tarefas
     }
 
+    /**
+     * Retorna os questionários na página de questionários do portal da disciplina
+     *
+     * Esta função retorna todos os questionários com isEnviado definido como false
+     * Para obter o questionário com todas as informações, é preciso abrir a página do questionário
+     * e utilizar o getQuestionarioCompletoPaginaQuestionario
+     */
     fun getQuestionariosDisciplina(body: String, disciplina: Disciplina): ArrayList<Questionario> {
         val questionarios = ArrayList<Questionario>()
 

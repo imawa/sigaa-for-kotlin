@@ -58,6 +58,10 @@ class SIGAA(context: Context) {
         return historyManager.getLastResponse()
     }
 
+    /**
+     * Realiza o login no SIGAA com as credenciais inseridas
+     * Retorna um boolean indicando se o login ocorreu com sucesso
+     */
     fun login(login: String, senha: String): Boolean {
         historyManager.clearHistory()
         // Pegar novo sessionId
@@ -108,27 +112,42 @@ class SIGAA(context: Context) {
         return true
     }
 
+    /**
+     * Desloga do SIGAA
+     */
     fun logout() {
         sessionId = null
         usuario = null
         historyManager.clearHistory()
     }
 
+    /**
+     * Retorna todas as disciplinas que o participa ou participou
+     */
     fun getAllDisciplinas(): ArrayList<Disciplina> {
         networkGet("/portais/discente/turmas.jsf")
         return parser.getDisciplinasTodasAsTurmas(historyManager.getLastPageBodyString())
     }
 
+    /**
+     * Retorna as avaliações cadastradas na disciplina inserida
+     */
     fun getAvaliacoes(disciplina: Disciplina): ArrayList<Avaliacao> {
         getPaginaPortalDisciplina(disciplina, PAGINA_AVALIACOES)
         return parser.getAvaliacoesDisciplina(historyManager.getLastPageBodyString(), disciplina)
     }
 
+    /**
+     * Retorna as tarefas cadastradas na disciplina inserida
+     */
     fun getTarefas(disciplina: Disciplina): ArrayList<Tarefa> {
         getPaginaPortalDisciplina(disciplina, PAGINA_TAREFAS)
         return parser.getTarefasDisciplina(historyManager.getLastPageBodyString(), disciplina)
     }
 
+    /**
+     * Retorna os questionários cadastrados na disciplina inserida
+     */
     fun getQuestionarios(disciplina: Disciplina): ArrayList<Questionario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_QUESTIONARIOS)
         val questionarios = parser.getQuestionariosDisciplina(historyManager.getLastPageBodyString(), disciplina)
@@ -144,11 +163,18 @@ class SIGAA(context: Context) {
         return questionarios
     }
 
+    /**
+     * Abre o portal do discente por meio do botão do menu do discente
+     * É utilizado somente para pular avisos no login
+     */
     private fun getPortalDiscente(): Response {
         Timber.d("Abrindo portal do discente")
         return networkGet("/verPortalDiscente.do")
     }
 
+    /**
+     * Abre o portal da disciplina inserida
+     */
     private fun getPortalDisciplina(disciplina: Disciplina): Response {
         if (historyManager.currentDisciplina?.frontEndIdTurma != disciplina.frontEndIdTurma) {
             // Portal da disciplina não está atualmente aberto
@@ -185,6 +211,9 @@ class SIGAA(context: Context) {
         return historyManager.getLastResponse()
     }
 
+    /**
+     * Abre uma página da esquerda no portal da disciplina
+     */
     private fun getPaginaPortalDisciplina(disciplina: Disciplina, pagina: Int): Response {
         // Abrir o portal da disciplina
         getPortalDisciplina(disciplina)
@@ -203,6 +232,9 @@ class SIGAA(context: Context) {
         return historyManager.getLastResponse()
     }
 
+    /**
+     * Abre a página inicial do questionário inserido (a página com os botões de voltar e de iniciar o questionário)
+     */
     private fun getPaginaQuestionario(questionario: Questionario, disciplina: Disciplina): Response {
         // Abrir portal do discente
         Timber.d("Abrindo portal do discente")
