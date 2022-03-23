@@ -4,13 +4,18 @@ import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
 import com.imawa.sigaaforkotlin.models.Avaliacao
 import com.imawa.sigaaforkotlin.models.Disciplina
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
+import com.imawa.sigaaforkotlin.models.Tarefa
 import com.imawa.sigaaforkotlin.models.Usuario
 import okhttp3.Response
 import org.jsoup.Jsoup
 import java.text.SimpleDateFormat
+import java.util.*
 
 
 class SIGAAParser {
+    private val formatoData = SimpleDateFormat("dd/MM/yyyy HH:mm")
+
     fun getSessionId(response: Response): String? =
         response.header("Set-Cookie")?.split("JSESSIONID=")?.get(1)?.split(";")?.get(0)
 
@@ -115,6 +120,7 @@ class SIGAAParser {
         // Texto do botão em questão
         val textoBotao = when (pagina) {
             PAGINA_AVALIACOES -> "Avaliações"
+            PAGINA_TAREFAS -> "Tarefas"
             else -> "Principal"
         }
 
@@ -156,8 +162,6 @@ class SIGAAParser {
             document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
 
         if (bodyTabela != null) {
-            val formatoData = SimpleDateFormat("dd/MM/yyyy HH:mm")
-
             for (linha in bodyTabela.getElementsByTag("tr")) {
                 var id: Long = 0
                 var descricao = ""
@@ -184,5 +188,99 @@ class SIGAAParser {
         }
 
         return avaliacoes
+    }
+
+    fun getTarefasDisciplina(body: String, disciplina: Disciplina): ArrayList<Tarefa> {
+        val tarefas = ArrayList<Tarefa>()
+
+        val document = Jsoup.parse(body)
+        val bodyTabela =
+            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
+
+        if (bodyTabela != null) {
+            // Cada tarefa ocupa duas linhas no corpo da tabela
+            // A segunda contém somente a descrição
+            // A primeira contém as outras informações
+            for (i in 0 until bodyTabela.children().size step 2) {
+                val primeiraLinha = bodyTabela.child(i)
+                val segundaLinha = bodyTabela.child(i + 1)
+
+                // Primeira linha
+                val titulo = primeiraLinha.child(1).text().trim()
+
+                val stringsData = primeiraLinha.child(2).text().trim().replace("h", ":").split(" ")
+                val dataInicio = formatoData.parse("${stringsData[1]} ${stringsData[3]}")
+                val dataFim = formatoData.parse("${stringsData[5]} ${stringsData[7]}")
+
+                val envios = primeiraLinha.child(4).text().trim().toInt()
+                val isCorrigida = primeiraLinha.child(0).childrenSize() == 1
+
+                // IDs
+                var id = ""
+                var jId: String? = null
+                var jIdEnviar: String? = null
+                var jIdVisualizar: String? = null
+
+                val botaoEnviar = primeiraLinha.child(5).children().first()
+                val botaoVisualizar = primeiraLinha.child(6).children().first()
+
+                val dataAtual = Date()
+                val isEnviavel =
+                    dataAtual.after(dataInicio) and dataAtual.before(dataFim) and (botaoEnviar != null)
+
+                if (botaoEnviar != null) {
+                    val args = botaoEnviar.attr("onclick").split("'")
+                    id = args[11]
+                    jId = args[3]
+                    jIdEnviar = args[5]
+                }
+
+                val isEnviada = botaoVisualizar != null
+
+                if (isEnviada) {
+                    val args = botaoVisualizar!!.attr("onclick").split("'")
+                    id = args[11]
+                    jId = args[3]
+                    jIdVisualizar = args[5]
+                }
+
+                // Segunda linha
+                var descricao = ""
+                var urlArquivo: String? = null
+
+                for (paragrafoDescricao in segundaLinha.child(0).children()) {
+                    if (paragrafoDescricao.text().equals("Baixar arquivo")) {
+                        // Botão de baixar arquivo
+                        val caminho = paragrafoDescricao.attr("href").replace("/sigaa", "")
+                        urlArquivo = "${urlBase}${caminho}"
+                    } else {
+                        // Texto escrito pelo professor
+                        descricao += "${paragrafoDescricao.text()}\n"
+                    }
+                }
+                descricao = descricao.trim()
+
+                tarefas.add(
+                    Tarefa(
+                        id,
+                        titulo,
+                        descricao,
+                        urlArquivo,
+                        dataInicio,
+                        dataFim,
+                        envios,
+                        isEnviavel,
+                        isEnviada,
+                        isCorrigida,
+                        jId,
+                        jIdEnviar,
+                        jIdVisualizar,
+                        disciplina
+                    )
+                )
+            }
+        }
+
+        return tarefas
     }
 }

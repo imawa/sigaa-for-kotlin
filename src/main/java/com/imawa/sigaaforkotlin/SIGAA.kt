@@ -4,6 +4,8 @@ import android.content.Context
 import com.imawa.sigaaforkotlin.models.Avaliacao
 import com.imawa.sigaaforkotlin.models.Disciplina
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
+import com.imawa.sigaaforkotlin.models.Tarefa
 import com.imawa.sigaaforkotlin.models.Usuario
 import com.imawa.sigaaforkotlin.network.SIGAAFormBuilder
 import com.imawa.sigaaforkotlin.network.SIGAAHistoryManager
@@ -121,6 +123,11 @@ class SIGAA(context: Context) {
     fun getAvaliacoes(disciplina: Disciplina): ArrayList<Avaliacao> {
         getPaginaPortalDisciplina(disciplina, PAGINA_AVALIACOES)
         return parser.getAvaliacoesDisciplina(historyManager.getLastPageBodyString(), disciplina)
+    }
+
+    fun getTarefas(disciplina: Disciplina): ArrayList<Tarefa> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_TAREFAS)
+        return parser.getTarefasDisciplina(historyManager.getLastPageBodyString(), disciplina)
     }
 
     private fun getPortalDiscente(): Response {

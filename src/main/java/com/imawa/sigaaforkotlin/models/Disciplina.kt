@@ -10,5 +10,6 @@ data class Disciplina(
 ) {
     companion object {
         const val PAGINA_AVALIACOES = 1
+        const val PAGINA_TAREFAS = 2
     }
 }
