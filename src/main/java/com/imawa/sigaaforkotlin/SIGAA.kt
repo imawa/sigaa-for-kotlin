@@ -1,12 +1,10 @@
 package com.imawa.sigaaforkotlin
 
 import android.content.Context
-import com.imawa.sigaaforkotlin.models.Avaliacao
-import com.imawa.sigaaforkotlin.models.Disciplina
+import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
-import com.imawa.sigaaforkotlin.models.Tarefa
-import com.imawa.sigaaforkotlin.models.Usuario
 import com.imawa.sigaaforkotlin.network.SIGAAFormBuilder
 import com.imawa.sigaaforkotlin.network.SIGAAHistoryManager
 import com.imawa.sigaaforkotlin.network.SIGAAInterceptor
@@ -16,6 +14,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import timber.log.Timber
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 class SIGAA(context: Context) {
@@ -130,6 +129,21 @@ class SIGAA(context: Context) {
         return parser.getTarefasDisciplina(historyManager.getLastPageBodyString(), disciplina)
     }
 
+    fun getQuestionarios(disciplina: Disciplina): ArrayList<Questionario> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_QUESTIONARIOS)
+        val questionarios = parser.getQuestionariosDisciplina(historyManager.getLastPageBodyString(), disciplina)
+
+        // Identificar se os questionários ainda abertos já foram enviados
+        val dataAtual = Date()
+
+        for (questionario in questionarios.filter { it.dataInicio.before(dataAtual) and it.dataFim.after(dataAtual) }) {
+            getPaginaQuestionario(questionario, disciplina)
+            questionarios[questionarios.indexOf(questionario)] = parser.getQuestionarioCompletoPaginaQuestionario(historyManager.getLastPageBodyString(), questionario)
+        }
+
+        return questionarios
+    }
+
     private fun getPortalDiscente(): Response {
         Timber.d("Abrindo portal do discente")
         return networkGet("/verPortalDiscente.do")
@@ -185,6 +199,27 @@ class SIGAA(context: Context) {
         )
         Timber.d("Abrindo a página $pagina no portal da disciplina ${disciplina.nome}")
         networkPost(caminho, bodyPaginaPortalDisciplina)
+
+        return historyManager.getLastResponse()
+    }
+
+    private fun getPaginaQuestionario(questionario: Questionario, disciplina: Disciplina): Response {
+        // Abrir portal do discente
+        Timber.d("Abrindo portal do discente")
+        networkGet("/portais/discente/discente.jsf")
+
+        // Abrir página do questionário
+        Timber.d("Abrindo página do questionário ${questionario.titulo}")
+        val formBody = formBuilder.buildOpenPaginaQuestionarioPeloPortalDiscenteForm(questionario, disciplina, historyManager.lastJavaxViewState)
+        networkPost("/portais/discente/discente.jsf#", formBody)
+
+        // Atualizar a disciplina aberta atualmente salva no historyManager
+        if (disciplina.id != null) {
+            historyManager.currentDisciplina = disciplina
+        } else {
+            // Abriu uma turma pública que não vai mais ser usada futuramente
+            historyManager.currentDisciplina = null
+        }
 
         return historyManager.getLastResponse()
     }

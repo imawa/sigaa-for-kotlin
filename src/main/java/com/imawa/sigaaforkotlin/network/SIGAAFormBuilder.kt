@@ -1,6 +1,7 @@
 package com.imawa.sigaaforkotlin.network
 
 import com.imawa.sigaaforkotlin.models.Disciplina
+import com.imawa.sigaaforkotlin.models.Questionario
 import okhttp3.FormBody
 
 class SIGAAFormBuilder(private val parser: SIGAAParser) {
@@ -48,4 +49,22 @@ class SIGAAFormBuilder(private val parser: SIGAAParser) {
             .add(args[1][0], args[1][1])
             .build()
     }
+
+    fun buildOpenPaginaQuestionarioPeloPortalDiscenteForm(
+        questionario: Questionario,
+        disciplina: Disciplina,
+        javaxViewState: String
+    ): FormBody = FormBody.Builder().add("formAtividades", "formAtividades")
+        .add("javax.faces.ViewState", javaxViewState)
+        .add(
+            "formAtividades:visualizarQuestionarioTurmaVirtual",
+            "formAtividades:visualizarQuestionarioTurmaVirtual"
+        )
+        .add("id", questionario.id.toString())
+        .add(
+            "idTurma",
+            disciplina.id
+                ?: "31464" // O segundo ID é de uma turma pública. O questionário abre normalmente mesmo assim
+        )
+        .build()
 }

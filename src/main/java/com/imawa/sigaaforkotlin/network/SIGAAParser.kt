@@ -1,12 +1,10 @@
 package com.imawa.sigaaforkotlin.network
 
 import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
-import com.imawa.sigaaforkotlin.models.Avaliacao
-import com.imawa.sigaaforkotlin.models.Disciplina
+import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
-import com.imawa.sigaaforkotlin.models.Tarefa
-import com.imawa.sigaaforkotlin.models.Usuario
 import okhttp3.Response
 import org.jsoup.Jsoup
 import java.text.SimpleDateFormat
@@ -121,6 +119,7 @@ class SIGAAParser {
         val textoBotao = when (pagina) {
             PAGINA_AVALIACOES -> "Avaliações"
             PAGINA_TAREFAS -> "Tarefas"
+            PAGINA_QUESTIONARIOS -> "Questionários"
             else -> "Principal"
         }
 
@@ -282,5 +281,46 @@ class SIGAAParser {
         }
 
         return tarefas
+    }
+
+    fun getQuestionariosDisciplina(body: String, disciplina: Disciplina): ArrayList<Questionario> {
+        val questionarios = ArrayList<Questionario>()
+
+        val document = Jsoup.parse(body)
+        val bodyTabela =
+            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
+
+        if (bodyTabela != null) {
+            for (linha in bodyTabela.getElementsByTag("tr")) {
+                val id = linha.child(4).child(0).attr("onclick").split("'")[11].toLong()
+                val titulo = linha.child(0).text().trim()
+                val dataInicio = formatoData.parse(linha.child(1).text())
+                val dataFim = formatoData.parse(linha.child(2).text())
+
+                questionarios.add(Questionario(id, titulo, dataInicio, dataFim, false, disciplina))
+            }
+        }
+
+        return questionarios
+    }
+
+    fun getQuestionarioCompletoPaginaQuestionario(
+        body: String,
+        questionario: Questionario
+    ): Questionario {
+        val document = Jsoup.parse(body)
+
+        // Propriedades restantes a conferir
+        val isEnviado =
+            document.getElementsByAttributeValue("value", "Visualizar Resultado").size > 0
+
+        return Questionario(
+            questionario.id,
+            questionario.titulo,
+            questionario.dataInicio,
+            questionario.dataFim,
+            isEnviado,
+            questionario.disciplina
+        )
     }
 }
