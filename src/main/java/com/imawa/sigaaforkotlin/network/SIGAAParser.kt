@@ -1,10 +1,14 @@
 package com.imawa.sigaaforkotlin.network
 
 import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
+import com.imawa.sigaaforkotlin.models.Avaliacao
 import com.imawa.sigaaforkotlin.models.Disciplina
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Usuario
 import okhttp3.Response
 import org.jsoup.Jsoup
+import java.text.SimpleDateFormat
+
 
 class SIGAAParser {
     fun getSessionId(response: Response): String? =
@@ -100,5 +104,85 @@ class SIGAAParser {
         }
 
         return disciplinas
+    }
+
+    fun getArgsBotaoPortalDisciplina(body: String, pagina: Int): ArrayList<ArrayList<String>> {
+        val document = Jsoup.parse(body)
+
+        val primeiroPar = ArrayList<String>()
+        val segundoPar = ArrayList<String>()
+
+        // Texto do botão em questão
+        val textoBotao = when (pagina) {
+            PAGINA_AVALIACOES -> "Avaliações"
+            else -> "Principal"
+        }
+
+        // Encontrar o botão na página
+        val itensMenu = document.body().getElementsByClass("itemMenu")
+
+        for (item in itensMenu) {
+            if (item.text().equals(textoBotao)) {
+                // Primeiro par
+                primeiroPar.add(
+                    item.parent()!!.parent()!!.parent()!!.parent()!!.parent()!!.parent()!!
+                        .parent()!!.parent()!!.id()
+                )
+                primeiroPar.add(
+                    item.parent()!!.parent()!!.parent()!!.parent()!!.parent()!!.parent()!!
+                        .parent()!!.id()
+                )
+
+                // Segundo par
+                for (string in item.parent()!!.outerHtml().split("'")) {
+                    if (string.startsWith("formMenu:j_id_jsp_")) {
+                        segundoPar.add(string)
+                    }
+                }
+            }
+        }
+
+        return arrayListOf(primeiroPar, segundoPar)
+    }
+
+    fun getCaminhoBotaoPortalDisciplina(body: String): String =
+        Jsoup.parse(body).getElementById("form_nee")!!.attr("action").replace("/sigaa", "")
+
+    fun getAvaliacoesDisciplina(body: String, disciplina: Disciplina): ArrayList<Avaliacao> {
+        val avaliacoes = ArrayList<Avaliacao>()
+
+        val document = Jsoup.parse(body)
+        val bodyTabela =
+            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
+
+        if (bodyTabela != null) {
+            val formatoData = SimpleDateFormat("dd/MM/yyyy HH:mm")
+
+            for (linha in bodyTabela.getElementsByTag("tr")) {
+                var id: Long = 0
+                var descricao = ""
+                var dia = ""
+                var hora = ""
+
+                // Pegar valores das colunas
+                for (coluna in linha.getElementsByTag("td")) {
+                    when (coluna.elementSiblingIndex()) {
+                        0 -> dia = coluna.text()
+                        1 -> hora = coluna.text()
+                        2 -> descricao = coluna.text()
+                        3 -> id = coluna.child(0).attr("onclick").split("'")[11].toLong()
+                    }
+                }
+
+                // O formato do dia é padronizado, mas a hora não é
+                // Por causa disso, eu estou definindo a data para
+                // a meia noite do dia indicado
+                val data = formatoData.parse("$dia 00:00")
+
+                avaliacoes.add(Avaliacao(id, descricao, data, hora, disciplina))
+            }
+        }
+
+        return avaliacoes
     }
 }

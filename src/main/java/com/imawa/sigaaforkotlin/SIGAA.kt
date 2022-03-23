@@ -1,7 +1,9 @@
 package com.imawa.sigaaforkotlin
 
 import android.content.Context
+import com.imawa.sigaaforkotlin.models.Avaliacao
 import com.imawa.sigaaforkotlin.models.Disciplina
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Usuario
 import com.imawa.sigaaforkotlin.network.SIGAAFormBuilder
 import com.imawa.sigaaforkotlin.network.SIGAAHistoryManager
@@ -19,9 +21,8 @@ class SIGAA(context: Context) {
 
     var usuario: Usuario? = null
 
-    private val formBuilder = SIGAAFormBuilder()
     private val parser = SIGAAParser()
-
+    private val formBuilder = SIGAAFormBuilder(parser)
     private val historyManager = SIGAAHistoryManager(parser)
 
     private val client = OkHttpClient.Builder().addInterceptor(SIGAAInterceptor(context, parser))
@@ -117,10 +118,68 @@ class SIGAA(context: Context) {
         return parser.getDisciplinasTodasAsTurmas(historyManager.getLastPageBodyString())
     }
 
+    fun getAvaliacoes(disciplina: Disciplina): ArrayList<Avaliacao> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_AVALIACOES)
+        return parser.getAvaliacoesDisciplina(historyManager.getLastPageBodyString(), disciplina)
+    }
+
     private fun getPortalDiscente(): Response {
-        val response = networkGet("/verPortalDiscente.do")
-        historyManager.addToHistory(response)
-        return response
+        Timber.d("Abrindo portal do discente")
+        return networkGet("/verPortalDiscente.do")
+    }
+
+    private fun getPortalDisciplina(disciplina: Disciplina): Response {
+        if (historyManager.currentDisciplina?.frontEndIdTurma != disciplina.frontEndIdTurma) {
+            // Portal da disciplina não está atualmente aberto
+            Timber.d("Portal da disciplina ${disciplina.nome} ainda não aberto")
+            if (disciplina.id == null) {
+                // Disciplina da página com todas as turmas
+                Timber.d("Abrindo lista de turmas")
+                networkGet("/portais/discente/turmas.jsf")
+
+                Timber.d("Abrindo portal da disciplina")
+                val formBody = formBuilder.buildOpenPortalDisciplinaPelasTurmasForm(
+                    disciplina,
+                    historyManager.lastJavaxViewState
+                )
+                networkPost("/portais/discente/turmas.jsf", formBody)
+            } else {
+                // Disciplina do portal do discente
+                Timber.d("Abrindo portal do discente")
+                networkGet("/portais/discente/discente.jsf")
+
+                Timber.d("Abrindo portal da disciplina")
+                val formBody = formBuilder.buildOpenPortalDisciplinaPeloPortalDiscenteForm(
+                    disciplina,
+                    historyManager.lastJavaxViewState
+                )
+                networkPost("/portais/discente/discente.jsf#", formBody)
+            }
+        } else {
+            Timber.d("Portal da disciplina ${disciplina.nome} já aberto")
+        }
+
+        historyManager.currentDisciplina = disciplina
+
+        return historyManager.getLastResponse()
+    }
+
+    private fun getPaginaPortalDisciplina(disciplina: Disciplina, pagina: Int): Response {
+        // Abrir o portal da disciplina
+        getPortalDisciplina(disciplina)
+
+        // Abrir a página no portal da disciplina
+        val caminho =
+            parser.getCaminhoBotaoPortalDisciplina(historyManager.getLastDisciplinaPageBodyString())
+        val bodyPaginaPortalDisciplina = formBuilder.buildOpenPaginaPortalDisciplinaForm(
+            historyManager.getLastDisciplinaPageBodyString(),
+            pagina,
+            historyManager.lastJavaxViewState
+        )
+        Timber.d("Abrindo a página $pagina no portal da disciplina ${disciplina.nome}")
+        networkPost(caminho, bodyPaginaPortalDisciplina)
+
+        return historyManager.getLastResponse()
     }
 
     companion object {

@@ -7,4 +7,8 @@ data class Disciplina(
     val formAcessarTurmaVirtual: String,
     val formAcessarTurmaVirtualCompleto: String,
     val frontEndIdTurma: String
-)
+) {
+    companion object {
+        const val PAGINA_AVALIACOES = 1
+    }
+}
