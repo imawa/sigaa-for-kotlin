@@ -65,10 +65,9 @@ class SIGAA(context: Context) {
      * Retorna um boolean indicando se o login ocorreu com sucesso
      */
     fun login(login: String, senha: String): Boolean {
-        historyManager.clearHistory()
-        // Pegar novo sessionId
-        sessionId = null
+        logout()
 
+        // Pegar novo sessionId
         val responseTelaLogin = networkGet("/verTelaLogin.do")
         sessionId = parser.getSessionId(responseTelaLogin)
 
