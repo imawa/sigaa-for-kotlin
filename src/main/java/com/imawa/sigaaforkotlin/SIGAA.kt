@@ -16,10 +16,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import timber.log.Timber
+import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class SIGAA(context: Context) {
+class SIGAA(private val context: Context) {
     var sessionId: String? = null
 
     var usuario: Usuario? = null
@@ -36,7 +37,7 @@ class SIGAA(context: Context) {
         Timber.plant(Timber.DebugTree())
     }
 
-    private fun networkGet(caminho: String): Response {
+    private fun networkGet(caminho: String, addToHistory: Boolean): Response {
         val requestBuilder = Request.Builder().url(urlBase + caminho)
             .header("Content-Type", "application/x-www-form-urlencoded")
 
@@ -44,11 +45,16 @@ class SIGAA(context: Context) {
             requestBuilder.header("Cookie", "JSESSIONID=$sessionId")
         }
 
-        historyManager.addToHistory(client.newCall(requestBuilder.build()).execute())
-        return historyManager.getLastResponse()
+        val response = client.newCall(requestBuilder.build()).execute()
+
+        if (addToHistory) {
+            historyManager.addToHistory(response)
+        }
+
+        return response
     }
 
-    private fun networkPost(caminho: String, formBody: FormBody): Response {
+    private fun networkPost(caminho: String, formBody: FormBody, addToHistory: Boolean): Response {
         val requestBuilder = Request.Builder().url("${urlBase}${caminho}")
             .header("Content-Type", "application/x-www-form-urlencoded").post(formBody)
 
@@ -56,8 +62,13 @@ class SIGAA(context: Context) {
             requestBuilder.addHeader("Cookie", "JSESSIONID=$sessionId")
         }
 
-        historyManager.addToHistory(client.newCall(requestBuilder.build()).execute())
-        return historyManager.getLastResponse()
+        val response = client.newCall(requestBuilder.build()).execute()
+
+        if (addToHistory) {
+            historyManager.addToHistory(response)
+        }
+
+        return response
     }
 
     /**
@@ -68,7 +79,7 @@ class SIGAA(context: Context) {
         logout()
 
         // Pegar novo sessionId
-        val responseTelaLogin = networkGet("/verTelaLogin.do")
+        val responseTelaLogin = networkGet("/verTelaLogin.do", true)
         sessionId = parser.getSessionId(responseTelaLogin)
 
         if (sessionId == null) {
@@ -79,7 +90,7 @@ class SIGAA(context: Context) {
         // Logar sessionId
         val formLogin = formBuilder.buildLoginForm(login, senha)
         val responseLogin =
-            networkPost("/logar.do", formLogin)
+            networkPost("/logar.do", formLogin, true)
 
         val location = parser.getLocation(responseLogin)
 
@@ -126,7 +137,7 @@ class SIGAA(context: Context) {
      * Retorna todas as disciplinas que o participa ou participou
      */
     fun getAllDisciplinas(): ArrayList<Disciplina> {
-        networkGet("/portais/discente/turmas.jsf")
+        networkGet("/portais/discente/turmas.jsf", true)
         return parser.getDisciplinasTodasAsTurmas(historyManager.getLastPageBodyString())
     }
 
@@ -140,12 +151,41 @@ class SIGAA(context: Context) {
 
     /**
      * Retorna a lista de arquivos publicados na disciplina inserida
-     * Os objetos retornados aqui não contém o conteúdo dos arquivos!
+     *
+     * Os objetos retornados aqui não contêm o conteúdo dos arquivos!
      * Para obter o conteúdo dos arquivos, utilize downloadArquivo()
      */
     fun getArquivos(disciplina: Disciplina): ArrayList<Arquivo> {
         getPaginaPortalDisciplina(disciplina, PAGINA_ARQUIVOS)
         return parser.getArquivosDisciplina(historyManager.getLastPageBodyString(), disciplina)
+    }
+
+    /**
+     * Retorna o conteúdo de um arquivo publicado no SIGAA
+     */
+    fun downloadArquivo(arquivo: Arquivo): File {
+        getPaginaPortalDisciplina(arquivo.disciplina, PAGINA_ARQUIVOS)
+
+        // Baixar o arquivo
+        Timber.d("Baixando o arquivo ${arquivo.titulo}")
+        val formBody = formBuilder.buildDownloadArquivoForm(
+            arquivo,
+            historyManager.getLastDisciplinaPageJavaxViewState()
+        )
+        val response = networkPost("/ava/ArquivoTurma/listar_discente.jsf", formBody, false)
+
+        // Criar o diretório
+        val dir = File(context.filesDir, "sigaa-for-kotlin")
+        dir.mkdirs()
+
+        // Criar o arquivo
+        val nome =
+            response.header("Content-Disposition")!!.trim().replace("\"", "").split("filename=")[1]
+        val byteArray = response.body!!.bytes()
+        val file = File(dir, nome)
+        file.writeBytes(byteArray)
+
+        return file
     }
 
     /**
@@ -197,7 +237,7 @@ class SIGAA(context: Context) {
      */
     private fun getPortalDiscente(): Response {
         Timber.d("Abrindo portal do discente")
-        return networkGet("/verPortalDiscente.do")
+        return networkGet("/verPortalDiscente.do", true)
     }
 
     /**
@@ -210,25 +250,25 @@ class SIGAA(context: Context) {
             if (disciplina.id == null) {
                 // Disciplina da página com todas as turmas
                 Timber.d("Abrindo lista de turmas")
-                networkGet("/portais/discente/turmas.jsf")
+                networkGet("/portais/discente/turmas.jsf", true)
 
                 Timber.d("Abrindo portal da disciplina")
                 val formBody = formBuilder.buildOpenPortalDisciplinaPelasTurmasForm(
                     disciplina,
                     historyManager.lastJavaxViewState
                 )
-                networkPost("/portais/discente/turmas.jsf", formBody)
+                networkPost("/portais/discente/turmas.jsf", formBody, true)
             } else {
                 // Disciplina do portal do discente
                 Timber.d("Abrindo portal do discente")
-                networkGet("/portais/discente/discente.jsf")
+                networkGet("/portais/discente/discente.jsf", true)
 
                 Timber.d("Abrindo portal da disciplina")
                 val formBody = formBuilder.buildOpenPortalDisciplinaPeloPortalDiscenteForm(
                     disciplina,
                     historyManager.lastJavaxViewState
                 )
-                networkPost("/portais/discente/discente.jsf#", formBody)
+                networkPost("/portais/discente/discente.jsf#", formBody, true)
             }
         } else {
             Timber.d("Portal da disciplina ${disciplina.nome} já aberto")
@@ -265,7 +305,7 @@ class SIGAA(context: Context) {
                 historyManager.lastJavaxViewState
             )
             Timber.d("Abrindo a página $pagina no portal da disciplina ${disciplina.nome}")
-            networkPost(caminho, bodyPaginaPortalDisciplina)
+            networkPost(caminho, bodyPaginaPortalDisciplina, true)
         }
 
         return historyManager.getLastResponse()
@@ -280,7 +320,7 @@ class SIGAA(context: Context) {
     ): Response {
         // Abrir portal do discente
         Timber.d("Abrindo portal do discente")
-        networkGet("/portais/discente/discente.jsf")
+        networkGet("/portais/discente/discente.jsf", true)
 
         // Abrir página do questionário
         Timber.d("Abrindo página do questionário ${questionario.titulo}")
@@ -289,7 +329,7 @@ class SIGAA(context: Context) {
             disciplina,
             historyManager.lastJavaxViewState
         )
-        networkPost("/portais/discente/discente.jsf#", formBody)
+        networkPost("/portais/discente/discente.jsf#", formBody, true)
 
         // Atualizar a disciplina aberta atualmente salva no historyManager
         if (disciplina.id != null) {

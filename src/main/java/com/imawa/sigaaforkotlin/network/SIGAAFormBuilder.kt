@@ -1,5 +1,6 @@
 package com.imawa.sigaaforkotlin.network
 
+import com.imawa.sigaaforkotlin.models.Arquivo
 import com.imawa.sigaaforkotlin.models.Disciplina
 import com.imawa.sigaaforkotlin.models.Questionario
 import okhttp3.FormBody
@@ -67,4 +68,11 @@ class SIGAAFormBuilder(private val parser: SIGAAParser) {
                 ?: "31464" // O segundo ID é de uma turma pública. O questionário abre normalmente mesmo assim
         )
         .build()
+
+    fun buildDownloadArquivoForm(arquivo: Arquivo, javaxViewState: String): FormBody =
+        FormBody.Builder().add("formAva", "formAva")
+            .add("javax.faces.ViewState", javaxViewState)
+            .add(arquivo.jIdJsp, arquivo.jIdJsp)
+            .add("id", arquivo.id)
+            .build()
 }

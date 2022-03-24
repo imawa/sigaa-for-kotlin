@@ -28,13 +28,19 @@ class SIGAAHistoryManager(private val parser: SIGAAParser) {
         Timber.d("javax.ViewState mais recente: $lastJavaxViewState")
     }
 
+    fun clearHistory() {
+        lastJavaxViewState = "j_id1"
+        responseHistory.clear()
+        bodyStringHistory.clear()
+    }
+
     fun getLastResponse(): Response = responseHistory[responseHistory.size - 1]
 
     fun getLastPageBodyString(): String = bodyStringHistory[bodyStringHistory.size - 1]
 
     fun getLastDisciplinaPageBodyString(): String {
         for (i in maximumHistorySize - 1 downTo 0) {
-            if (bodyStringHistory[i].contains("linkNomeTurma")) {
+            if (bodyStringHistory[i].contains("id=\"linkNomeTurma\"")) {
                 return bodyStringHistory[i]
             }
         }
@@ -42,11 +48,8 @@ class SIGAAHistoryManager(private val parser: SIGAAParser) {
         return getLastPageBodyString()
     }
 
-    fun clearHistory() {
-        lastJavaxViewState = "j_id1"
-        responseHistory.clear()
-        bodyStringHistory.clear()
-    }
+    fun getLastDisciplinaPageJavaxViewState(): String =
+        parser.getJavaxViewState(getLastPageBodyString()) ?: lastJavaxViewState
 
     companion object {
         const val maximumHistorySize = 3
