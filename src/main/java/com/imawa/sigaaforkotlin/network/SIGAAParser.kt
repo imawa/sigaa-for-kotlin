@@ -178,7 +178,20 @@ class SIGAAParser {
      * se altera
      */
     fun getCaminhoBotaoPortalDisciplina(body: String): String =
-        Jsoup.parse(body).getElementById("form_nee")!!.attr("action").replace("/sigaa", "")
+        Jsoup.parse(body).getElementById("form_nee")?.attr("action")?.replace("/sigaa", "") ?: ""
+
+    /**
+     * Retorna o caminho do POST para um botão do menu na esquerda do portal da disciplina baseado
+     * no número da página
+     */
+    fun getCaminhoBotaoPortalDisciplina(pagina: Int): String = when (pagina) {
+        PAGINA_PARTICIPANTES -> "/ava/participantes.jsf"
+        PAGINA_ARQUIVOS -> "/ava/ArquivoTurma/listar_discente.jsf"
+        PAGINA_AVALIACOES -> "/ava/DataAvaliacao/listar.jsf"
+        PAGINA_TAREFAS -> "/ava/TarefaTurma/listar.jsf"
+        PAGINA_QUESTIONARIOS -> "/ava/QuestionarioTurma/listarDiscente.jsf"
+        else -> "/ava/index.jsf"
+    }
 
     fun getParticipantesDisciplina(body: String): ArrayList<Usuario> {
         val participantes = ArrayList<Usuario>()

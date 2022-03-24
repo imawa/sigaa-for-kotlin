@@ -247,16 +247,27 @@ class SIGAA(context: Context) {
         // Abrir o portal da disciplina
         getPortalDisciplina(disciplina)
 
-        // Abrir a página no portal da disciplina
-        val caminho =
-            parser.getCaminhoBotaoPortalDisciplina(historyManager.getLastDisciplinaPageBodyString())
-        val bodyPaginaPortalDisciplina = formBuilder.buildOpenPaginaPortalDisciplinaForm(
-            historyManager.getLastDisciplinaPageBodyString(),
-            pagina,
-            historyManager.lastJavaxViewState
-        )
-        Timber.d("Abrindo a página $pagina no portal da disciplina ${disciplina.nome}")
-        networkPost(caminho, bodyPaginaPortalDisciplina)
+        // Conferir se a página já não está aberta
+        // Cada página tem um caminho individual para qual o próximo POST é feito
+        // Baseado nesse caminho, é possível identificar a página atual
+        if (parser.getCaminhoBotaoPortalDisciplina(historyManager.getLastDisciplinaPageBodyString()) == parser.getCaminhoBotaoPortalDisciplina(
+                pagina
+            )
+        ) {
+            // Página já aberta
+            Timber.d("Página $pagina já aberta no portal da disciplina ${disciplina.nome}")
+        } else {
+            // Página não aberta -> abrir a página no portal da disciplina
+            val caminho =
+                parser.getCaminhoBotaoPortalDisciplina(historyManager.getLastDisciplinaPageBodyString())
+            val bodyPaginaPortalDisciplina = formBuilder.buildOpenPaginaPortalDisciplinaForm(
+                historyManager.getLastDisciplinaPageBodyString(),
+                pagina,
+                historyManager.lastJavaxViewState
+            )
+            Timber.d("Abrindo a página $pagina no portal da disciplina ${disciplina.nome}")
+            networkPost(caminho, bodyPaginaPortalDisciplina)
+        }
 
         return historyManager.getLastResponse()
     }
