@@ -2,6 +2,7 @@ package com.imawa.sigaaforkotlin
 
 import android.content.Context
 import com.imawa.sigaaforkotlin.models.*
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
@@ -136,6 +137,16 @@ class SIGAA(context: Context) {
     fun getParticipantes(disciplina: Disciplina): ArrayList<Usuario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_PARTICIPANTES)
         return parser.getParticipantesDisciplina(historyManager.getLastPageBodyString())
+    }
+
+    /**
+     * Retorna a lista de arquivos publicados na disciplina inserida
+     * Os objetos retornados aqui não contém o conteúdo dos arquivos!
+     * Para obter o conteúdo dos arquivos, utilize downloadArquivo()
+     */
+    fun getArquivos(disciplina: Disciplina): ArrayList<Arquivo> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_ARQUIVOS)
+        return parser.getArquivosDisciplina(historyManager.getLastPageBodyString(), disciplina)
     }
 
     /**

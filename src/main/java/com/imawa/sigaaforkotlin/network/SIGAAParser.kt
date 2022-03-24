@@ -2,6 +2,7 @@ package com.imawa.sigaaforkotlin.network
 
 import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
 import com.imawa.sigaaforkotlin.models.*
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
@@ -137,6 +138,7 @@ class SIGAAParser {
         // Texto do botão em questão
         val textoBotao = when (pagina) {
             PAGINA_PARTICIPANTES -> "Participantes"
+            PAGINA_ARQUIVOS -> "Arquivos"
             PAGINA_AVALIACOES -> "Avaliações"
             PAGINA_TAREFAS -> "Tarefas"
             PAGINA_QUESTIONARIOS -> "Questionários"
@@ -227,6 +229,31 @@ class SIGAAParser {
         }
 
         return participantes
+    }
+
+    fun getArquivosDisciplina(body: String, disciplina: Disciplina): ArrayList<Arquivo> {
+        val arquivos = ArrayList<Arquivo>()
+
+        val document = Jsoup.parse(body)
+        val bodyTabela =
+            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
+
+        if (bodyTabela != null) {
+            for (linha in bodyTabela.getElementsByTag("tr")) {
+                val colunas = linha.getElementsByTag("td")
+
+                val titulo = colunas[0].text().trim()
+                val descricao = colunas[1].text().trim()
+                val topicoDeAula = colunas[2].text().trim()
+                val args = linha.getElementsByTag("a")[0].attr("onclick").split("'")
+                val jIdJsp = args[5]
+                val id = args[11]
+
+                arquivos.add(Arquivo(id, titulo, descricao, topicoDeAula, jIdJsp, disciplina))
+            }
+        }
+
+        return arquivos
     }
 
     fun getAvaliacoesDisciplina(body: String, disciplina: Disciplina): ArrayList<Avaliacao> {
