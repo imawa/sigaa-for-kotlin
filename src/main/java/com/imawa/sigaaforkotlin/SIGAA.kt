@@ -254,7 +254,7 @@ class SIGAA(context: Context) {
             )
         ) {
             // Página já aberta
-            Timber.d("Página $pagina já aberta no portal da disciplina ${disciplina.nome}")
+            Timber.d("Página $pagina no portal da disciplina ${disciplina.nome} já aberta")
         } else {
             // Página não aberta -> abrir a página no portal da disciplina
             val caminho =
