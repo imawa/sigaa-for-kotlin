@@ -134,7 +134,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna todas as disciplinas que o participa ou participou
+     * Retorna todas as disciplinas que o usuário participa ou participou
      */
     fun getAllDisciplinas(): ArrayList<Disciplina> {
         networkGet("/portais/discente/turmas.jsf", true)
