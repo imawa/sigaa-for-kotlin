@@ -138,8 +138,8 @@ class SIGAA(private val context: Context) {
      * Retorna todas as disciplinas que o usuário participa ou participou
      */
     fun getAllDisciplinas(): ArrayList<Disciplina> {
-        networkGet("/portais/discente/turmas.jsf", true)
-        return parser.getDisciplinasTodasAsTurmas(historyManager.getLastPageBodyString())
+        val response = networkGet("/portais/discente/turmas.jsf", false)
+        return parser.getDisciplinasTodasAsTurmas(response.body!!.string())
     }
 
     /**
@@ -147,7 +147,7 @@ class SIGAA(private val context: Context) {
      */
     fun getParticipantes(disciplina: Disciplina): ArrayList<Usuario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_PARTICIPANTES)
-        return parser.getParticipantesDisciplina(historyManager.getLastPageBodyString())
+        return parser.getParticipantesDisciplina(historyManager.getLastDisciplinaPageBodyString())
     }
 
     /**
@@ -166,7 +166,7 @@ class SIGAA(private val context: Context) {
      */
     fun getArquivos(disciplina: Disciplina): ArrayList<Arquivo> {
         getPaginaPortalDisciplina(disciplina, PAGINA_ARQUIVOS)
-        return parser.getArquivosDisciplina(historyManager.getLastPageBodyString(), disciplina)
+        return parser.getArquivosDisciplina(historyManager.getLastDisciplinaPageBodyString(), disciplina)
     }
 
     /**
@@ -202,7 +202,7 @@ class SIGAA(private val context: Context) {
      */
     fun getAvaliacoes(disciplina: Disciplina): ArrayList<Avaliacao> {
         getPaginaPortalDisciplina(disciplina, PAGINA_AVALIACOES)
-        return parser.getAvaliacoesDisciplina(historyManager.getLastPageBodyString(), disciplina)
+        return parser.getAvaliacoesDisciplina(historyManager.getLastDisciplinaPageBodyString(), disciplina)
     }
 
     /**
@@ -210,7 +210,7 @@ class SIGAA(private val context: Context) {
      */
     fun getTarefas(disciplina: Disciplina): ArrayList<Tarefa> {
         getPaginaPortalDisciplina(disciplina, PAGINA_TAREFAS)
-        return parser.getTarefasDisciplina(historyManager.getLastPageBodyString(), disciplina)
+        return parser.getTarefasDisciplina(historyManager.getLastDisciplinaPageBodyString(), disciplina)
     }
 
     /**
@@ -219,7 +219,7 @@ class SIGAA(private val context: Context) {
     fun getQuestionarios(disciplina: Disciplina): ArrayList<Questionario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_QUESTIONARIOS)
         val questionarios =
-            parser.getQuestionariosDisciplina(historyManager.getLastPageBodyString(), disciplina)
+            parser.getQuestionariosDisciplina(historyManager.getLastDisciplinaPageBodyString(), disciplina)
 
         // Identificar se os questionários ainda abertos já foram enviados
         val dataAtual = Date()
