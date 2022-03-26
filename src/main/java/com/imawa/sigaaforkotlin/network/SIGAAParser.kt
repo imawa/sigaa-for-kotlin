@@ -278,8 +278,8 @@ class SIGAAParser {
 
                 // Obter colunas (notas) que fazem parte do período
                 while (colunaAtual < colunaFimPeriodo) {
-                    val id = linhaDadosNotas!!.getElementsByTag("th")[colunaAtual].attr("id")
-                        .replace("aval_", "")
+                    val id = linhaDadosNotas?.getElementsByTag("th")?.get(colunaAtual)?.attr("id")
+                        ?.replace("aval_", "") ?: ""
                     val nota = if (!linhaNotas.child(colunaAtual).text()
                             .contains("-") and linhaNotas.child(colunaAtual).text().isNotEmpty()
                     ) {
@@ -301,13 +301,13 @@ class SIGAAParser {
                     } else {
                         // Nota de alguma atividade
                         abreviacao =
-                            linhaDadosNotas.getElementById("abrevAval_$id")?.attr("value")?.trim()
+                            linhaDadosNotas?.getElementById("abrevAval_$id")?.attr("value")?.trim()
                                 ?: ""
                         descricao =
-                            linhaDadosNotas.getElementById("denAval_$id")?.attr("value")?.trim()
+                            linhaDadosNotas?.getElementById("denAval_$id")?.attr("value")?.trim()
                                 ?: ""
                         notaMaxima =
-                            if (linhaDadosNotas.getElementById("notaAval_$id")?.attr("value")
+                            if (linhaDadosNotas?.getElementById("notaAval_$id")?.attr("value")
                                     ?.isNotEmpty() == true
                             ) {
                                 linhaDadosNotas.getElementById("notaAval_$id")!!.attr("value")
@@ -315,7 +315,7 @@ class SIGAAParser {
                             } else {
                                 (-1).toFloat()
                             }
-                        peso = if (linhaDadosNotas.getElementById("pesoAval_$id")?.attr("value")
+                        peso = if (linhaDadosNotas?.getElementById("pesoAval_$id")?.attr("value")
                                 ?.isNotEmpty() == true
                         ) {
                             linhaDadosNotas.getElementById("pesoAval_$id")!!.attr("value").toFloat()
