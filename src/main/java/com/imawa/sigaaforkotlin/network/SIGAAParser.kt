@@ -4,6 +4,7 @@ import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
 import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
@@ -138,6 +139,7 @@ class SIGAAParser {
         // Texto do botão em questão
         val textoBotao = when (pagina) {
             PAGINA_PARTICIPANTES -> "Participantes"
+            PAGINA_NOTAS -> "Ver Notas"
             PAGINA_ARQUIVOS -> "Arquivos"
             PAGINA_AVALIACOES -> "Avaliações"
             PAGINA_TAREFAS -> "Tarefas"
@@ -186,6 +188,7 @@ class SIGAAParser {
      */
     fun getCaminhoBotaoPortalDisciplina(pagina: Int): String = when (pagina) {
         PAGINA_PARTICIPANTES -> "/ava/participantes.jsf"
+        PAGINA_NOTAS -> "X" // A página de notas não conta para o javaxViewState e não possui um caminho
         PAGINA_ARQUIVOS -> "/ava/ArquivoTurma/listar_discente.jsf"
         PAGINA_AVALIACOES -> "/ava/DataAvaliacao/listar.jsf"
         PAGINA_TAREFAS -> "/ava/TarefaTurma/listar.jsf"
@@ -242,6 +245,104 @@ class SIGAAParser {
         }
 
         return participantes
+    }
+
+    fun getNotasDisciplina(body: String, disciplina: Disciplina): ArrayList<Nota> {
+        val notas = ArrayList<Nota>()
+
+        val document = Jsoup.parse(body)
+        val tabela = document.getElementsByClass("tabelaRelatorio")[0]
+        val linhaDescricaoPeriodos = tabela.getElementsByTag("tr")[0]
+        val linhaDadosNotas = tabela.getElementById("trAval")
+        val linhaNotas = tabela.getElementsByTag("tbody").first()?.child(0)
+
+        if (linhaNotas != null) {
+            // Colunas na linha das notas
+            var colunaAtual = 2
+            var colunaFimPeriodo = 2
+
+            // Percorrer períodos
+            for (i in 2 until linhaDescricaoPeriodos.childrenSize()) {
+                // Ignorar as médias parciais, nota necessária para o exame, resultado, faltas e
+                // situação
+                if (linhaDescricaoPeriodos.child(i).attr("colspan").isEmpty()) {
+                    continue
+                }
+
+                val periodo = linhaDescricaoPeriodos.child(i).text().trim()
+
+                // Identificar quantas colunas o período ocupa
+                val totalColunasPeriodo = linhaDescricaoPeriodos.child(i).attr("colspan").toInt()
+
+                colunaFimPeriodo += totalColunasPeriodo
+
+                // Obter colunas (notas) que fazem parte do período
+                while (colunaAtual < colunaFimPeriodo) {
+                    val id = linhaDadosNotas!!.getElementsByTag("th")[colunaAtual].attr("id")
+                        .replace("aval_", "")
+                    val nota = if (!linhaNotas.child(colunaAtual).text()
+                            .contains("-") and linhaNotas.child(colunaAtual).text().isNotEmpty()
+                    ) {
+                        linhaNotas.child(colunaAtual).text().replace(",", ".").toFloat()
+                    } else {
+                        (-1).toFloat() // Nota não inserida
+                    }
+                    val abreviacao: String
+                    val descricao: String
+                    val notaMaxima: Float
+                    val peso: Float
+
+                    if (id.contains("unid")) {
+                        // Nota final do período
+                        abreviacao = "Nota"
+                        descricao = ""
+                        notaMaxima = (10).toFloat()
+                        peso = (1).toFloat()
+                    } else {
+                        // Nota de alguma atividade
+                        abreviacao =
+                            linhaDadosNotas.getElementById("abrevAval_$id")?.attr("value")?.trim()
+                                ?: ""
+                        descricao =
+                            linhaDadosNotas.getElementById("denAval_$id")?.attr("value")?.trim()
+                                ?: ""
+                        notaMaxima =
+                            if (linhaDadosNotas.getElementById("notaAval_$id")?.attr("value")
+                                    ?.isNotEmpty() == true
+                            ) {
+                                linhaDadosNotas.getElementById("notaAval_$id")!!.attr("value")
+                                    .toFloat()
+                            } else {
+                                (-1).toFloat()
+                            }
+                        peso = if (linhaDadosNotas.getElementById("pesoAval_$id")?.attr("value")
+                                ?.isNotEmpty() == true
+                        ) {
+                            linhaDadosNotas.getElementById("pesoAval_$id")!!.attr("value").toFloat()
+                        } else {
+                            (-1).toFloat()
+                        }
+                    }
+
+                    notas.add(
+                        Nota(
+                            nota,
+                            notaMaxima,
+                            peso,
+                            abreviacao,
+                            descricao,
+                            periodo,
+                            disciplina
+                        )
+                    )
+
+                    // Ir para a próxima coluna
+                    colunaAtual++
+                }
+            }
+        }
+
+        return notas
     }
 
     fun getArquivosDisciplina(body: String, disciplina: Disciplina): ArrayList<Arquivo> {

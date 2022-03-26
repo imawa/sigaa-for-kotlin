@@ -4,6 +4,7 @@ import android.content.Context
 import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
@@ -150,6 +151,14 @@ class SIGAA(private val context: Context) {
     }
 
     /**
+     * Retorna as notas do usuário na disciplina inserida
+     */
+    fun getNotas(disciplina: Disciplina): ArrayList<Nota> {
+        val response = getPaginaPortalDisciplina(disciplina, PAGINA_NOTAS)
+        return parser.getNotasDisciplina(response.body!!.string(), disciplina)
+    }
+
+    /**
      * Retorna a lista de arquivos publicados na disciplina inserida
      *
      * Os objetos retornados aqui não contêm o conteúdo dos arquivos!
@@ -289,12 +298,14 @@ class SIGAA(private val context: Context) {
         // Conferir se a página já não está aberta
         // Cada página tem um caminho individual para qual o próximo POST é feito
         // Baseado nesse caminho, é possível identificar a página atual
+        val response: Response
         if (parser.getCaminhoBotaoPortalDisciplina(historyManager.getLastDisciplinaPageBodyString()) == parser.getCaminhoBotaoPortalDisciplina(
                 pagina
             )
         ) {
             // Página já aberta
             Timber.d("Página $pagina no portal da disciplina ${disciplina.nome} já aberta")
+            response = historyManager.getLastResponse()
         } else {
             // Página não aberta -> abrir a página no portal da disciplina
             val caminho =
@@ -305,10 +316,14 @@ class SIGAA(private val context: Context) {
                 historyManager.lastJavaxViewState
             )
             Timber.d("Abrindo a página $pagina no portal da disciplina ${disciplina.nome}")
-            networkPost(caminho, bodyPaginaPortalDisciplina, true)
+            val addToHistory = when (pagina) {
+                PAGINA_NOTAS -> false
+                else -> true
+            }
+            response = networkPost(caminho, bodyPaginaPortalDisciplina, addToHistory)
         }
 
-        return historyManager.getLastResponse()
+        return response
     }
 
     /**
