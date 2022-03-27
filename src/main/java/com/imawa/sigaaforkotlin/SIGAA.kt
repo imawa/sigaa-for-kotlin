@@ -217,8 +217,15 @@ class SIGAA(private val context: Context) {
      * Abre o portal do discente por meio do botão do menu do discente
      */
     private fun getPortalDiscente(): Response {
-        Timber.d("Abrindo portal do discente")
-        return networkGet("/verPortalDiscente.do")
+        if (parser.isPortalDiscente(historyManager.lastBody!!)) {
+            Timber.d("Portal do discente já aberto")
+        } else {
+            // Abrir portal do discente
+            Timber.d("Abrindo portal do discente")
+            networkGet("/verPortalDiscente.do")
+        }
+
+        return historyManager.lastResponse!!
     }
 
     /**
