@@ -215,7 +215,6 @@ class SIGAA(private val context: Context) {
 
     /**
      * Abre o portal do discente por meio do botão do menu do discente
-     * É utilizado somente para pular avisos no login
      */
     private fun getPortalDiscente(): Response {
         Timber.d("Abrindo portal do discente")
@@ -241,8 +240,7 @@ class SIGAA(private val context: Context) {
                 networkPost("/portais/discente/turmas.jsf", formBody)
             } else {
                 // Disciplina do portal do discente
-                Timber.d("Abrindo portal do discente")
-                networkGet("/portais/discente/discente.jsf")
+                getPortalDiscente()
 
                 Timber.d("Abrindo portal da disciplina")
                 val formBody = formBuilder.buildOpenPortalDisciplinaPeloPortalDiscenteForm(
@@ -306,8 +304,7 @@ class SIGAA(private val context: Context) {
         disciplina: Disciplina
     ): Response {
         // Abrir portal do discente
-        Timber.d("Abrindo portal do discente")
-        networkGet("/portais/discente/discente.jsf")
+        getPortalDiscente()
 
         // Abrir página do questionário
         Timber.d("Abrindo página do questionário ${questionario.titulo}")
