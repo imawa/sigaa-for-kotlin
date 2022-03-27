@@ -103,6 +103,7 @@ class SIGAA(private val context: Context) {
      * Retorna todas as disciplinas que o usuário participa ou participou
      */
     fun getAllDisciplinas(): ArrayList<Disciplina> {
+        Timber.d("Abrindo lista de turmas")
         networkGet("/portais/discente/turmas.jsf")
         return parser.getDisciplinasTodasAsTurmas(historyManager.lastBody!!)
     }
@@ -223,8 +224,7 @@ class SIGAA(private val context: Context) {
             Timber.d("Portal da disciplina ${disciplina.nome} ainda não aberto")
             if (disciplina.id == null) {
                 // Disciplina da página com todas as turmas
-                Timber.d("Abrindo lista de turmas")
-                networkGet("/portais/discente/turmas.jsf")
+                getAllDisciplinas()
 
                 Timber.d("Abrindo portal da disciplina")
                 val formBody = formBuilder.buildOpenPortalDisciplinaPelasTurmasForm(
