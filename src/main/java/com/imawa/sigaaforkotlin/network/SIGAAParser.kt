@@ -547,4 +547,6 @@ class SIGAAParser {
             questionario.disciplina
         )
     }
+
+    fun isPortalDisciplina(body: String): Boolean = body.contains("id=\"linkNomeTurma\"")
 }
