@@ -32,11 +32,6 @@ class SIGAAParser {
         return document.body().getElementById("javax.faces.ViewState")?.attr("value")
     }
 
-    fun getLogado(body: String): Boolean {
-        val document = Jsoup.parse(body)
-        return document.getElementsByClass("usuario").size > 0 || document.getElementById("painelDadosUsuario") != null
-    }
-
     fun getUsuarioPortalDiscente(body: String, login: String): Usuario {
         val document = Jsoup.parse(body)
 
@@ -548,5 +543,10 @@ class SIGAAParser {
         )
     }
 
+    fun isLogado(body: String): Boolean {
+        val document = Jsoup.parse(body)
+        return document.getElementsByClass("usuario").size > 0 || document.getElementById("painelDadosUsuario") != null
+    }
+    
     fun isPortalDisciplina(body: String): Boolean = body.contains("id=\"linkNomeTurma\"")
 }

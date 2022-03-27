@@ -73,12 +73,12 @@ class SIGAA(private val context: Context) {
         }
 
         // Conferir se logou
-        if (!parser.getLogado(historyManager.lastBody!!)) {
+        if (!parser.isLogado(historyManager.lastBody!!)) {
             // Conferir o portal do discente
             Timber.d("Conferindo o login no portal do discente")
             getPortalDiscente()
 
-            if (!parser.getLogado(historyManager.lastBody!!)) {
+            if (!parser.isLogado(historyManager.lastBody!!)) {
                 Timber.d("Não foi possível logar")
                 return false
             }
