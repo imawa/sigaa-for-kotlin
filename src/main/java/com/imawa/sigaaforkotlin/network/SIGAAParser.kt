@@ -547,6 +547,11 @@ class SIGAAParser {
         val document = Jsoup.parse(body)
         return document.getElementsByClass("usuario").size > 0 || document.getElementById("painelDadosUsuario") != null
     }
-    
+
+    fun isListaTurmas(body: String): Boolean {
+        val document = Jsoup.parse(body)
+        return document.getElementsByAttributeValueContaining("action", "/sigaa/portais/discente/turmas.jsf").size > 0
+    }
+
     fun isPortalDisciplina(body: String): Boolean = body.contains("id=\"linkNomeTurma\"")
 }
