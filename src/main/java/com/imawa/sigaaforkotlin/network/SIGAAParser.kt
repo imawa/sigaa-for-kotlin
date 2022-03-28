@@ -7,6 +7,7 @@ import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PRINCIPAL
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
 import com.imawa.sigaaforkotlin.models.Usuario.Companion.USUARIO_DISCENTE
@@ -134,6 +135,7 @@ class SIGAAParser {
 
         // Texto do botão em questão
         val textoBotao = when (pagina) {
+            PAGINA_PRINCIPAL -> "Principal"
             PAGINA_PARTICIPANTES -> "Participantes"
             PAGINA_NOTICIAS -> "Notícias"
             PAGINA_NOTAS -> "Ver Notas"
@@ -184,6 +186,7 @@ class SIGAAParser {
      * no número da página
      */
     fun getCaminhoBotaoPortalDisciplina(pagina: Int): String = when (pagina) {
+        PAGINA_PRINCIPAL -> "/ava/index.jsf"
         PAGINA_PARTICIPANTES -> "/ava/participantes.jsf"
         PAGINA_NOTICIAS -> "/ava/NoticiaTurma/listar.jsf"
         PAGINA_NOTAS -> "X" // A página de notas não conta para o javaxViewState e não possui um caminho
@@ -191,7 +194,29 @@ class SIGAAParser {
         PAGINA_AVALIACOES -> "/ava/DataAvaliacao/listar.jsf"
         PAGINA_TAREFAS -> "/ava/TarefaTurma/listar.jsf"
         PAGINA_QUESTIONARIOS -> "/ava/QuestionarioTurma/listarDiscente.jsf"
-        else -> "/ava/index.jsf"
+        else -> "X"
+    }
+
+    fun getAulasDisciplina(body: String, disciplina: Disciplina): ArrayList<Aula> {
+        val aulas = ArrayList<Aula>()
+
+        val document = Jsoup.parse(body)
+
+        for (topico in document.getElementsByClass("topico-aula")) {
+            val titulo = topico.getElementsByClass("titulo")[0]?.text()?.trim() ?: ""
+            val elementoConteudo = topico.getElementsByClass("conteudotopico")[0]
+
+            // Remover os anexos do conteúdo
+            for (anexo in elementoConteudo.getElementsByClass("item")) {
+                anexo.parent()!!.remove()
+            }
+
+            val htmlConteudo = elementoConteudo.html()
+
+            aulas.add(Aula(titulo, htmlConteudo, disciplina))
+        }
+
+        return aulas
     }
 
     fun getParticipantesDisciplina(body: String): ArrayList<Usuario> {

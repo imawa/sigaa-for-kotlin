@@ -7,6 +7,7 @@ import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PRINCIPAL
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
 import com.imawa.sigaaforkotlin.network.SIGAAFormBuilder
@@ -114,6 +115,14 @@ class SIGAA(private val context: Context) {
         }
 
         return parser.getDisciplinasTodasAsTurmas(historyManager.lastBody!!)
+    }
+
+    /**
+     * Retorna as aulas cadastradas na disciplina inserida
+     */
+    fun getAulas(disciplina: Disciplina): ArrayList<Aula> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_PRINCIPAL)
+        return parser.getAulasDisciplina(historyManager.lastDisciplinaBody!!, disciplina)
     }
 
     /**

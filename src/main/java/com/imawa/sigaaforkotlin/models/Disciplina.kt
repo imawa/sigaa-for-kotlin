@@ -9,6 +9,7 @@ data class Disciplina(
     val frontEndIdTurma: String
 ) {
     companion object {
+        const val PAGINA_PRINCIPAL = 0
         const val PAGINA_PARTICIPANTES = 4
         const val PAGINA_NOTICIAS = 7
         const val PAGINA_NOTAS = 6
