@@ -5,6 +5,7 @@ import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
@@ -134,6 +135,7 @@ class SIGAAParser {
         // Texto do botão em questão
         val textoBotao = when (pagina) {
             PAGINA_PARTICIPANTES -> "Participantes"
+            PAGINA_NOTICIAS -> "Notícias"
             PAGINA_NOTAS -> "Ver Notas"
             PAGINA_ARQUIVOS -> "Arquivos"
             PAGINA_AVALIACOES -> "Avaliações"
@@ -183,6 +185,7 @@ class SIGAAParser {
      */
     fun getCaminhoBotaoPortalDisciplina(pagina: Int): String = when (pagina) {
         PAGINA_PARTICIPANTES -> "/ava/participantes.jsf"
+        PAGINA_NOTICIAS -> "/ava/NoticiaTurma/listar.jsf"
         PAGINA_NOTAS -> "X" // A página de notas não conta para o javaxViewState e não possui um caminho
         PAGINA_ARQUIVOS -> "/ava/ArquivoTurma/listar_discente.jsf"
         PAGINA_AVALIACOES -> "/ava/DataAvaliacao/listar.jsf"
@@ -240,6 +243,55 @@ class SIGAAParser {
         }
 
         return participantes
+    }
+
+    fun getNoticiasDisciplina(body: String, disciplina: Disciplina): ArrayList<Noticia> {
+        val noticias = ArrayList<Noticia>()
+
+        val document = Jsoup.parse(body)
+        val bodyTabela =
+            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
+
+        if (bodyTabela != null) {
+            for (linha in bodyTabela.getElementsByTag("tr")) {
+                val titulo = linha.child(0).text().trim()
+                val args = linha.child(2).child(0).attr("onclick").split("'")
+                val jIdJsp = args[3]
+                val jIdJspCompleto = args[5]
+                val id = args[11].toInt()
+
+                noticias.add(Noticia(id, titulo, "", Date(), jIdJsp, jIdJspCompleto, disciplina))
+            }
+        }
+
+        return noticias
+    }
+
+    fun getNoticiaCompletaPaginaNoticia(body: String, noticia: Noticia): Noticia {
+        val document = Jsoup.parse(body)
+        val form = document.getElementsByClass("form").first()
+
+        val data = formatoData.parse(form?.child(1)?.child(1)?.text()?.trim() ?: "01/01/2010 00:00")
+
+        val conteudoNoticia = form?.getElementsByClass("conteudoNoticia")?.first()
+        var texto = ""
+
+        if (conteudoNoticia != null) {
+            for (linha in conteudoNoticia.child(0).children()) {
+                texto += "${linha.text()}\n"
+            }
+            texto = texto.trim()
+        }
+
+        return Noticia(
+            noticia.id,
+            noticia.titulo,
+            texto,
+            data,
+            noticia.jIdJsp,
+            noticia.jIdJspCompleto,
+            noticia.disciplina
+        )
     }
 
     fun getNotasDisciplina(body: String, disciplina: Disciplina): ArrayList<Nota> {
@@ -550,13 +602,19 @@ class SIGAAParser {
 
     fun isPortalDiscente(body: String): Boolean {
         val document = Jsoup.parse(body)
-        return document.getElementsByAttributeValueContaining("action", "/sigaa/portais/discente/discente.jsf").size > 0
+        return document.getElementsByAttributeValueContaining(
+            "action",
+            "/sigaa/portais/discente/discente.jsf"
+        ).size > 0
     }
 
     fun isPortalDisciplina(body: String): Boolean = body.contains("id=\"linkNomeTurma\"")
 
     fun isListaTurmas(body: String): Boolean {
         val document = Jsoup.parse(body)
-        return document.getElementsByAttributeValueContaining("action", "/sigaa/portais/discente/turmas.jsf").size > 0
+        return document.getElementsByAttributeValueContaining(
+            "action",
+            "/sigaa/portais/discente/turmas.jsf"
+        ).size > 0
     }
 }

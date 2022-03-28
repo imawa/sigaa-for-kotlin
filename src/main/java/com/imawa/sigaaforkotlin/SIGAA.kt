@@ -5,6 +5,7 @@ import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
@@ -121,6 +122,22 @@ class SIGAA(private val context: Context) {
     fun getParticipantes(disciplina: Disciplina): ArrayList<Usuario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_PARTICIPANTES)
         return parser.getParticipantesDisciplina(historyManager.lastDisciplinaBody!!)
+    }
+
+    /**
+     * Retorna as notícias cadastradas na disciplina inserida
+     */
+    fun getNoticias(disciplina: Disciplina): ArrayList<Noticia> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_NOTICIAS)
+        val noticias = parser.getNoticiasDisciplina(historyManager.lastDisciplinaBody!!, disciplina)
+
+        // Obter as notícias completas
+        for (noticia in noticias) {
+            getPaginaNoticia(noticia)
+            noticias[noticias.indexOf(noticia)] = parser.getNoticiaCompletaPaginaNoticia(historyManager.lastDisciplinaBody!!, noticia)
+        }
+
+        return noticias
     }
 
     /**
@@ -301,6 +318,20 @@ class SIGAA(private val context: Context) {
         }
 
         return response
+    }
+
+    /**
+     * Abre a página com todas as informações da notícia inserida
+     */
+    private fun getPaginaNoticia(noticia: Noticia): Response {
+        getPaginaPortalDisciplina(noticia.disciplina, PAGINA_NOTICIAS)
+
+        // Abrir a página da notícia
+        Timber.d("Abrindo a página da notícia ${noticia.titulo} no portal da disciplina ${noticia.disciplina.nome}")
+        val formBody = formBuilder.buildOpenNoticiaForm(noticia, historyManager.lastDisciplinaJavaxViewState!!)
+        networkPost(parser.getCaminhoBotaoPortalDisciplina(historyManager.lastDisciplinaBody!!), formBody)
+
+        return historyManager.lastDisciplinaResponse!!
     }
 
     /**
