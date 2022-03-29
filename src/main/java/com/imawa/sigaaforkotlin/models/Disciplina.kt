@@ -13,6 +13,7 @@ data class Disciplina(
         const val PAGINA_PARTICIPANTES = 4
         const val PAGINA_NOTICIAS = 7
         const val PAGINA_NOTAS = 6
+        const val PAGINA_REFERENCIAS = 8
         const val PAGINA_ARQUIVOS = 5
         const val PAGINA_AVALIACOES = 1
         const val PAGINA_TAREFAS = 2

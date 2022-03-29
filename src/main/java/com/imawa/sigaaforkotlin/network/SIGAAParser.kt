@@ -9,7 +9,11 @@ import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PRINCIPAL
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_REFERENCIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
+import com.imawa.sigaaforkotlin.models.Referencia.Companion.REFERENCIA_LIVRO
+import com.imawa.sigaaforkotlin.models.Referencia.Companion.REFERENCIA_OUTROS
+import com.imawa.sigaaforkotlin.models.Referencia.Companion.REFERENCIA_SITE
 import com.imawa.sigaaforkotlin.models.Usuario.Companion.USUARIO_DISCENTE
 import com.imawa.sigaaforkotlin.models.Usuario.Companion.USUARIO_DOCENTE
 import okhttp3.Response
@@ -139,6 +143,7 @@ class SIGAAParser {
             PAGINA_PARTICIPANTES -> "Participantes"
             PAGINA_NOTICIAS -> "Notícias"
             PAGINA_NOTAS -> "Ver Notas"
+            PAGINA_REFERENCIAS -> "Referências"
             PAGINA_ARQUIVOS -> "Arquivos"
             PAGINA_AVALIACOES -> "Avaliações"
             PAGINA_TAREFAS -> "Tarefas"
@@ -191,6 +196,7 @@ class SIGAAParser {
         PAGINA_NOTICIAS -> "/ava/NoticiaTurma/listar.jsf"
         PAGINA_NOTAS -> "X" // A página de notas não conta para o javaxViewState e não possui um caminho
         PAGINA_ARQUIVOS -> "/ava/ArquivoTurma/listar_discente.jsf"
+        PAGINA_REFERENCIAS -> "/ava/IndicacaoReferencia/listar.jsf"
         PAGINA_AVALIACOES -> "/ava/DataAvaliacao/listar.jsf"
         PAGINA_TAREFAS -> "/ava/TarefaTurma/listar.jsf"
         PAGINA_QUESTIONARIOS -> "/ava/QuestionarioTurma/listarDiscente.jsf"
@@ -415,6 +421,31 @@ class SIGAAParser {
         }
 
         return notas
+    }
+
+    fun getReferenciasDisciplina(body: String, disciplina: Disciplina): ArrayList<Referencia> {
+        val referencias = ArrayList<Referencia>()
+
+        val document = Jsoup.parse(body)
+        val bodyTabela =
+            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
+
+        if (bodyTabela != null) {
+            for (linha in bodyTabela.children()) {
+                val nome = linha.child(0).text().trim()
+                val tipo = when (linha.child(1).text().trim()) {
+                    "Site" -> REFERENCIA_SITE
+                    "Livro" -> REFERENCIA_LIVRO
+                    else -> REFERENCIA_OUTROS
+                }
+                val url = linha.child(2).text().trim()
+                val topicoDeAula = linha.child(3).text().trim()
+
+                referencias.add(Referencia(nome, tipo, url, topicoDeAula, disciplina))
+            }
+        }
+
+        return referencias
     }
 
     fun getArquivosDisciplina(body: String, disciplina: Disciplina): ArrayList<Arquivo> {

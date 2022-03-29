@@ -9,6 +9,7 @@ import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PRINCIPAL
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_QUESTIONARIOS
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_REFERENCIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_TAREFAS
 import com.imawa.sigaaforkotlin.network.SIGAAFormBuilder
 import com.imawa.sigaaforkotlin.network.SIGAAHistoryManager
@@ -155,6 +156,14 @@ class SIGAA(private val context: Context) {
     fun getNotas(disciplina: Disciplina): ArrayList<Nota> {
         val response = getPaginaPortalDisciplina(disciplina, PAGINA_NOTAS)
         return parser.getNotasDisciplina(response.body!!.string(), disciplina)
+    }
+
+    /**
+     * Retorna as referências utilizadas na disciplina inserida
+     */
+    fun getReferencias(disciplina: Disciplina): ArrayList<Referencia> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_REFERENCIAS)
+        return parser.getReferenciasDisciplina(historyManager.lastDisciplinaBody!!, disciplina)
     }
 
     /**
