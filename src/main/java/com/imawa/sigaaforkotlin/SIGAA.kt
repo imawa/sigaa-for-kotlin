@@ -4,6 +4,7 @@ import android.content.Context
 import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_CONTEUDOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
@@ -144,7 +145,8 @@ class SIGAA(private val context: Context) {
         // Obter as notícias completas
         for (noticia in noticias) {
             getPaginaNoticia(noticia)
-            noticias[noticias.indexOf(noticia)] = parser.getNoticiaCompletaPaginaNoticia(historyManager.lastDisciplinaBody!!, noticia)
+            noticias[noticias.indexOf(noticia)] =
+                parser.getNoticiaCompletaPaginaNoticia(historyManager.lastDisciplinaBody!!, noticia)
         }
 
         return noticias
@@ -156,6 +158,26 @@ class SIGAA(private val context: Context) {
     fun getNotas(disciplina: Disciplina): ArrayList<Nota> {
         val response = getPaginaPortalDisciplina(disciplina, PAGINA_NOTAS)
         return parser.getNotasDisciplina(response.body!!.string(), disciplina)
+    }
+
+    /**
+     * Retorna o conteúdo cadastrado na disciplina inserida
+     */
+    fun getConteudos(disciplina: Disciplina): ArrayList<Conteudo> {
+        getPaginaPortalDisciplina(disciplina, PAGINA_CONTEUDOS)
+        val conteudos =
+            parser.getConteudosDisciplina(historyManager.lastDisciplinaBody!!, disciplina)
+
+        // Obter os conteúdos completos
+        for (conteudo in conteudos) {
+            getPaginaConteudo(conteudo)
+            conteudos[conteudos.indexOf(conteudo)] = parser.getConteudoCompletoPaginaConteudo(
+                historyManager.lastDisciplinaBody!!,
+                conteudo
+            )
+        }
+
+        return conteudos
     }
 
     /**
@@ -346,8 +368,32 @@ class SIGAA(private val context: Context) {
 
         // Abrir a página da notícia
         Timber.d("Abrindo a página da notícia ${noticia.titulo} no portal da disciplina ${noticia.disciplina.nome}")
-        val formBody = formBuilder.buildOpenNoticiaForm(noticia, historyManager.lastDisciplinaJavaxViewState!!)
-        networkPost(parser.getCaminhoBotaoPortalDisciplina(historyManager.lastDisciplinaBody!!), formBody)
+        val formBody =
+            formBuilder.buildOpenNoticiaForm(noticia, historyManager.lastDisciplinaJavaxViewState!!)
+        networkPost(
+            parser.getCaminhoBotaoPortalDisciplina(historyManager.lastDisciplinaBody!!),
+            formBody
+        )
+
+        return historyManager.lastDisciplinaResponse!!
+    }
+
+    /**
+     * Abre a página com todas as informações do conteúdo inserido
+     */
+    private fun getPaginaConteudo(conteudo: Conteudo): Response {
+        getPaginaPortalDisciplina(conteudo.disciplina, PAGINA_CONTEUDOS)
+
+        // Abrir a página do conteúdo
+        Timber.d("Abrindo a página do conteúdo ${conteudo.titulo} no portal da disciplina ${conteudo.disciplina.nome}")
+        val formBody = formBuilder.buildOpenConteudoForm(
+            conteudo,
+            historyManager.lastDisciplinaJavaxViewState!!
+        )
+        networkPost(
+            parser.getCaminhoBotaoPortalDisciplina(historyManager.lastDisciplinaBody!!),
+            formBody
+        )
 
         return historyManager.lastDisciplinaResponse!!
     }

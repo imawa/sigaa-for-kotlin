@@ -4,6 +4,7 @@ import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
 import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_CONTEUDOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
@@ -143,6 +144,7 @@ class SIGAAParser {
             PAGINA_PARTICIPANTES -> "Participantes"
             PAGINA_NOTICIAS -> "Notícias"
             PAGINA_NOTAS -> "Ver Notas"
+            PAGINA_CONTEUDOS -> "Conteúdo/Página web"
             PAGINA_REFERENCIAS -> "Referências"
             PAGINA_ARQUIVOS -> "Arquivos"
             PAGINA_AVALIACOES -> "Avaliações"
@@ -196,6 +198,7 @@ class SIGAAParser {
         PAGINA_NOTICIAS -> "/ava/NoticiaTurma/listar.jsf"
         PAGINA_NOTAS -> "X" // A página de notas não conta para o javaxViewState e não possui um caminho
         PAGINA_ARQUIVOS -> "/ava/ArquivoTurma/listar_discente.jsf"
+        PAGINA_CONTEUDOS -> "/ava/ConteudoTurma/listar.jsf"
         PAGINA_REFERENCIAS -> "/ava/IndicacaoReferencia/listar.jsf"
         PAGINA_AVALIACOES -> "/ava/DataAvaliacao/listar.jsf"
         PAGINA_TAREFAS -> "/ava/TarefaTurma/listar.jsf"
@@ -421,6 +424,53 @@ class SIGAAParser {
         }
 
         return notas
+    }
+
+    fun getConteudosDisciplina(body: String, disciplina: Disciplina): ArrayList<Conteudo> {
+        val conteudos = ArrayList<Conteudo>()
+
+        val document = Jsoup.parse(body)
+        val bodyTabela =
+            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
+
+        if (bodyTabela != null) {
+            for (linha in bodyTabela.children()) {
+                val titulo = linha.child(0).text().trim()
+                val data = formatoData.parse("${linha.child(1).text().trim()} 00:00")
+                val args = linha.child(2).child(0).attr("onclick").split("'")
+                val jIdJsp = args[3]
+                val jIdJspCompleto = args[5]
+                val id = args[11].toInt()
+
+                conteudos.add(Conteudo(id, titulo, "", data, jIdJsp, jIdJspCompleto, disciplina))
+            }
+        }
+
+        return conteudos
+    }
+
+    fun getConteudoCompletoPaginaConteudo(body: String, conteudo: Conteudo): Conteudo {
+        val document = Jsoup.parse(body)
+        val bodyTabela =
+            document.getElementsByClass("formAva").first()?.getElementsByTag("tbody")?.first()
+
+        var textoConteudo = ""
+        if (bodyTabela != null) {
+            for (linhaConteudo in bodyTabela.child(1).child(1).children()) {
+                textoConteudo += "${linhaConteudo.text()}\n"
+            }
+            textoConteudo = textoConteudo.trim()
+        }
+
+        return Conteudo(
+            conteudo.id,
+            conteudo.titulo,
+            textoConteudo,
+            conteudo.data,
+            conteudo.jIdJsp,
+            conteudo.jIdJspCompleto,
+            conteudo.disciplina
+        )
     }
 
     fun getReferenciasDisciplina(body: String, disciplina: Disciplina): ArrayList<Referencia> {

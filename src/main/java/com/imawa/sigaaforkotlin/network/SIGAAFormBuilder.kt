@@ -1,9 +1,6 @@
 package com.imawa.sigaaforkotlin.network
 
-import com.imawa.sigaaforkotlin.models.Arquivo
-import com.imawa.sigaaforkotlin.models.Disciplina
-import com.imawa.sigaaforkotlin.models.Noticia
-import com.imawa.sigaaforkotlin.models.Questionario
+import com.imawa.sigaaforkotlin.models.*
 import okhttp3.FormBody
 
 class SIGAAFormBuilder(private val parser: SIGAAParser) {
@@ -56,6 +53,12 @@ class SIGAAFormBuilder(private val parser: SIGAAParser) {
         FormBody.Builder().add(noticia.jIdJsp, noticia.jIdJsp)
             .add("javax.faces.ViewState", javaxViewState)
             .add(noticia.jIdJspCompleto, noticia.jIdJspCompleto).add("id", noticia.id.toString())
+            .build()
+
+    fun buildOpenConteudoForm(conteudo: Conteudo, javaxViewState: String): FormBody =
+        FormBody.Builder().add(conteudo.jIdJsp, conteudo.jIdJsp)
+            .add("javax.faces.ViewState", javaxViewState)
+            .add(conteudo.jIdJspCompleto, conteudo.jIdJspCompleto).add("id", conteudo.id.toString())
             .build()
 
     fun buildOpenPaginaQuestionarioPeloPortalDiscenteForm(
