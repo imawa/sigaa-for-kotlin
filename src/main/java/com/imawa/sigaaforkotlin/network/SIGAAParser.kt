@@ -282,6 +282,13 @@ class SIGAAParser {
         return participantes
     }
 
+    /**
+     * Retorna as notícias na página de notícias do portal da disciplina
+     *
+     * As notícias retornadas aqui não possuem conteúdo
+     * Para obter a notícia com todas as informações, é preciso abrir a página individual da notícia
+     * e utilizar o getNoticiaCompletaPaginaNoticia
+     */
     fun getNoticiasDisciplina(body: String, disciplina: Disciplina): ArrayList<Noticia> {
         val noticias = ArrayList<Noticia>()
 
@@ -460,6 +467,13 @@ class SIGAAParser {
         return notas
     }
 
+    /**
+     * Retorna os conteúdos na página de conteúdos do portal da disciplina
+     *
+     * Os conteúdos retornados aqui não possuem o conteúdo em si
+     * Para obter o conteúdo em si, é preciso abrir a página individual do conteúdo
+     * e utilizar o getConteudoCompletoPaginaConteudo
+     */
     fun getConteudosDisciplina(body: String, disciplina: Disciplina): ArrayList<Conteudo> {
         val conteudos = ArrayList<Conteudo>()
 
