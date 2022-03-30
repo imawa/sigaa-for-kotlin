@@ -12,6 +12,7 @@ data class Disciplina(
         const val PAGINA_PRINCIPAL = 0
         const val PAGINA_PARTICIPANTES = 4
         const val PAGINA_NOTICIAS = 7
+        const val PAGINA_FREQUENCIAS = 10
         const val PAGINA_NOTAS = 6
         const val PAGINA_CONTEUDOS = 9
         const val PAGINA_REFERENCIAS = 8

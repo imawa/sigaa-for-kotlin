@@ -5,6 +5,7 @@ import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_CONTEUDOS
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_FREQUENCIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
@@ -150,6 +151,14 @@ class SIGAA(private val context: Context) {
         }
 
         return noticias
+    }
+
+    /**
+     * Retorna a frequência do usuário na disciplina inserida
+     */
+    fun getFrequencia(disciplina: Disciplina): Frequencia {
+        getPaginaPortalDisciplina(disciplina, PAGINA_FREQUENCIAS)
+        return parser.getFrequenciaDisciplina(historyManager.lastDisciplinaBody!!, disciplina)
     }
 
     /**

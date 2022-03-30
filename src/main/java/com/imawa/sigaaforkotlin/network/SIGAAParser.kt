@@ -5,6 +5,7 @@ import com.imawa.sigaaforkotlin.models.*
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_CONTEUDOS
+import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_FREQUENCIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_NOTICIAS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_PARTICIPANTES
@@ -143,6 +144,7 @@ class SIGAAParser {
             PAGINA_PRINCIPAL -> "Principal"
             PAGINA_PARTICIPANTES -> "Participantes"
             PAGINA_NOTICIAS -> "Notícias"
+            PAGINA_FREQUENCIAS -> "Frequência"
             PAGINA_NOTAS -> "Ver Notas"
             PAGINA_CONTEUDOS -> "Conteúdo/Página web"
             PAGINA_REFERENCIAS -> "Referências"
@@ -196,6 +198,7 @@ class SIGAAParser {
         PAGINA_PRINCIPAL -> "/ava/index.jsf"
         PAGINA_PARTICIPANTES -> "/ava/participantes.jsf"
         PAGINA_NOTICIAS -> "/ava/NoticiaTurma/listar.jsf"
+        PAGINA_FREQUENCIAS -> "/ava/FrequenciaAluno/mapa.jsf"
         PAGINA_NOTAS -> "X" // A página de notas não conta para o javaxViewState e não possui um caminho
         PAGINA_ARQUIVOS -> "/ava/ArquivoTurma/listar_discente.jsf"
         PAGINA_CONTEUDOS -> "/ava/ConteudoTurma/listar.jsf"
@@ -326,6 +329,37 @@ class SIGAAParser {
             noticia.jIdJspCompleto,
             noticia.disciplina
         )
+    }
+
+    fun getFrequenciaDisciplina(body: String, disciplina: Disciplina): Frequencia {
+        val document = Jsoup.parse(body)
+
+        val dadosFaltas = document.getElementsByClass("botoes-show").first()?.children()?.first()
+        val totalFaltas = dadosFaltas?.childNode(2)?.outerHtml()?.trim()?.toIntOrNull() ?: -1
+        val maximoFaltasPermitido =
+            dadosFaltas?.childNode(6)?.outerHtml()?.trim()?.toIntOrNull() ?: -1
+
+        val frequencia =
+            Frequencia(ArrayList<Presenca>(), totalFaltas, maximoFaltasPermitido, disciplina)
+
+        // Adicionar as presenças
+        val bodyTabela =
+            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
+
+        if (bodyTabela != null) {
+            for (linha in bodyTabela.children()) {
+                val data = formatoData.parse("${linha.child(0).text().trim()} 00:00")
+                val isRegistrada = linha.child(1).text().trim() != "Não Registrada"
+                val faltas = if (linha.child(1).text().trim().split(" ")[0].toIntOrNull() != null) {
+                    linha.child(1).text().trim().split(" ")[0].toInt()
+                } else {
+                    0
+                }
+                frequencia.presencas.add(Presenca(data, faltas, isRegistrada))
+            }
+        }
+
+        return frequencia
     }
 
     fun getNotasDisciplina(body: String, disciplina: Disciplina): ArrayList<Nota> {
