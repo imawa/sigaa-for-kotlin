@@ -51,8 +51,8 @@ class SIGAA(private val context: Context) {
         logout()
 
         // Pegar novo sessionId
-        val responseTelaLogin = networkGet("/verTelaLogin.do")
-        sessionId = parser.getSessionId(responseTelaLogin)
+        networkGet("/verTelaLogin.do")
+        sessionId = parser.getSessionId(historyManager.lastResponse!!)
 
         if (sessionId == null) {
             return false
@@ -61,9 +61,9 @@ class SIGAA(private val context: Context) {
 
         // Logar sessionId
         val formLogin = formBuilder.buildLoginForm(login, senha)
-        val responseLogin = networkPost("/logar.do", formLogin)
+        networkPost("/logar.do", formLogin)
 
-        val location = parser.getLocation(responseLogin)
+        val location = parser.getLocation(historyManager.lastResponse!!)
 
         // Retornar false se for um docente
         if (location?.contains("vinculos.jsf") == true || location?.contains("verMenuPrincipal.do") == true) {
