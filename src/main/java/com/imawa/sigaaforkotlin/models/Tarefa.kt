@@ -13,6 +13,7 @@ data class Tarefa(
     val isEnviavel: Boolean,
     val isEnviada: Boolean,
     val isCorrigida: Boolean,
+    val isIndividual: Boolean,
     val jId: String?,
     val jIdEnviar: String?,
     val jIdVisualizar: String?,

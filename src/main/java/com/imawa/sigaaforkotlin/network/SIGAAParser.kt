@@ -611,90 +611,100 @@ class SIGAAParser {
         val tarefas = ArrayList<Tarefa>()
 
         val document = Jsoup.parse(body)
-        val bodyTabela =
-            document.getElementsByClass("listing").first()?.getElementsByTag("tbody")?.first()
 
-        if (bodyTabela != null) {
-            // Cada tarefa ocupa duas linhas no corpo da tabela
-            // A segunda contém somente a descrição
-            // A primeira contém as outras informações
-            for (i in 0 until bodyTabela.children().size step 2) {
-                val primeiraLinha = bodyTabela.child(i)
-                val segundaLinha = bodyTabela.child(i + 1)
+        // Na página de tarefas, podem existir duas tabelas: uma para as tarefas individuais e
+        // outra para as tarefas em grupo
+        val tabelas =  document.getElementsByClass("listing")
 
-                // Primeira linha
-                val titulo = primeiraLinha.child(1).text().trim()
+        for (tabela in tabelas) {
+            val isIndividual = tabela.previousElementSibling()?.text()?.contains("Tarefas Individuais") ?: true
 
-                val stringsData = primeiraLinha.child(2).text().trim().replace("h", ":").split(" ")
-                val dataInicio = formatoData.parse("${stringsData[1]} ${stringsData[3]}")
-                val dataFim = formatoData.parse("${stringsData[5]} ${stringsData[7]}")
+            val bodyTabela =
+                tabela.getElementsByTag("tbody").first()
 
-                val envios = primeiraLinha.child(4).text().trim().toInt()
-                val isCorrigida = primeiraLinha.child(0).childrenSize() == 1
+            if (bodyTabela != null) {
+                // Cada tarefa ocupa duas linhas no corpo da tabela
+                // A segunda contém somente a descrição
+                // A primeira contém as outras informações
+                for (i in 0 until bodyTabela.children().size step 2) {
+                    val primeiraLinha = bodyTabela.child(i)
+                    val segundaLinha = bodyTabela.child(i + 1)
 
-                // IDs
-                var id = ""
-                var jId: String? = null
-                var jIdEnviar: String? = null
-                var jIdVisualizar: String? = null
+                    // Primeira linha
+                    val titulo = primeiraLinha.child(1).text().trim()
 
-                val botaoEnviar = primeiraLinha.child(5).children().first()
-                val botaoVisualizar = primeiraLinha.child(6).children().first()
+                    val stringsData = primeiraLinha.child(2).text().trim().replace("h", ":").split(" ")
+                    val dataInicio = formatoData.parse("${stringsData[1]} ${stringsData[3]}")
+                    val dataFim = formatoData.parse("${stringsData[5]} ${stringsData[7]}")
 
-                val dataAtual = Date()
-                val isEnviavel =
-                    dataAtual.after(dataInicio) and dataAtual.before(dataFim) and (botaoEnviar != null)
+                    val envios = primeiraLinha.child(4).text().trim().toInt()
+                    val isCorrigida = primeiraLinha.child(0).childrenSize() == 1
 
-                if (botaoEnviar != null) {
-                    val args = botaoEnviar.attr("onclick").split("'")
-                    id = args[11]
-                    jId = args[3]
-                    jIdEnviar = args[5]
-                }
+                    // IDs
+                    var id = ""
+                    var jId: String? = null
+                    var jIdEnviar: String? = null
+                    var jIdVisualizar: String? = null
 
-                val isEnviada = botaoVisualizar != null
+                    val botaoEnviar = primeiraLinha.child(5).children().first()
+                    val botaoVisualizar = primeiraLinha.child(6).children().first()
 
-                if (isEnviada) {
-                    val args = botaoVisualizar!!.attr("onclick").split("'")
-                    id = args[11]
-                    jId = args[3]
-                    jIdVisualizar = args[5]
-                }
+                    val dataAtual = Date()
+                    val isEnviavel =
+                        dataAtual.after(dataInicio) and dataAtual.before(dataFim) and (botaoEnviar != null)
 
-                // Segunda linha
-                var descricao = ""
-                var urlArquivo: String? = null
-
-                for (paragrafoDescricao in segundaLinha.child(0).children()) {
-                    if (paragrafoDescricao.text().equals("Baixar arquivo")) {
-                        // Botão de baixar arquivo
-                        val caminho = paragrafoDescricao.attr("href").replace("/sigaa", "")
-                        urlArquivo = "${urlBase}${caminho}"
-                    } else {
-                        // Texto escrito pelo professor
-                        descricao += "${paragrafoDescricao.text()}\n"
+                    if (botaoEnviar != null) {
+                        val args = botaoEnviar.attr("onclick").split("'")
+                        id = args[11]
+                        jId = args[3]
+                        jIdEnviar = args[5]
                     }
-                }
-                descricao = descricao.trim()
 
-                tarefas.add(
-                    Tarefa(
-                        id,
-                        titulo,
-                        descricao,
-                        urlArquivo,
-                        dataInicio,
-                        dataFim,
-                        envios,
-                        isEnviavel,
-                        isEnviada,
-                        isCorrigida,
-                        jId,
-                        jIdEnviar,
-                        jIdVisualizar,
-                        disciplina
+                    val isEnviada = botaoVisualizar != null
+
+                    if (isEnviada) {
+                        val args = botaoVisualizar!!.attr("onclick").split("'")
+                        id = args[11]
+                        jId = args[3]
+                        jIdVisualizar = args[5]
+                    }
+
+                    // Segunda linha
+                    var descricao = ""
+                    var urlArquivo: String? = null
+
+                    for (paragrafoDescricao in segundaLinha.child(0).children()) {
+                        if (paragrafoDescricao.text().equals("Baixar arquivo")) {
+                            // Botão de baixar arquivo
+                            val caminho = paragrafoDescricao.attr("href").replace("/sigaa", "")
+                            urlArquivo = "${urlBase}${caminho}"
+                        } else {
+                            // Texto escrito pelo professor
+                            descricao += "${paragrafoDescricao.text()}\n"
+                        }
+                    }
+                    descricao = descricao.trim()
+
+                    tarefas.add(
+                        Tarefa(
+                            id,
+                            titulo,
+                            descricao,
+                            urlArquivo,
+                            dataInicio,
+                            dataFim,
+                            envios,
+                            isEnviavel,
+                            isEnviada,
+                            isCorrigida,
+                            isIndividual,
+                            jId,
+                            jIdEnviar,
+                            jIdVisualizar,
+                            disciplina
+                        )
                     )
-                )
+                }
             }
         }
 
