@@ -22,16 +22,15 @@ class NetworkUtils {
         }
 
         fun isInternetAvailable(): Boolean {
-            try {
+            return try {
                 val socket = Socket()
                 val inetSocketAddress = InetSocketAddress("8.8.8.8", 53)
                 socket.connect(inetSocketAddress, 2 * 1000)
                 socket.close()
-                return true
+                true
             } catch (e: IOException) {
-                return false
+                false
             }
-
         }
 
         fun isValidResponse(response: Response?): Boolean {

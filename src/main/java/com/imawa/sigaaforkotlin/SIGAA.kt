@@ -263,11 +263,13 @@ class SIGAA(private val context: Context) {
         // Identificar se os questionários ainda abertos já foram enviados
         val dataAtual = Date()
 
-        for (questionario in questionarios.filter {
-            it.dataInicio.before(dataAtual) and it.dataFim.after(
-                dataAtual
-            )
-        }) {
+        for (
+            questionario in questionarios.filter {
+                it.dataInicio.before(dataAtual) and it.dataFim.after(
+                    dataAtual
+                )
+            }
+        ) {
             getPaginaQuestionario(questionario, disciplina)
             questionarios[questionarios.indexOf(questionario)] =
                 parser.getQuestionarioCompletoPaginaQuestionario(
@@ -459,7 +461,7 @@ class SIGAA(private val context: Context) {
         formBody: FormBody,
         addToHistory: Boolean = true
     ): Response {
-        val requestBuilder = Request.Builder().url("${urlBase}${caminho}")
+        val requestBuilder = Request.Builder().url("${urlBase}$caminho")
             .header("Content-Type", "application/x-www-form-urlencoded").post(formBody)
 
         if (sessionId != null) {

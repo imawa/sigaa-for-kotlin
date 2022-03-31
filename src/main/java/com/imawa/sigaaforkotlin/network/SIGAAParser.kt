@@ -32,7 +32,6 @@ import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 class SIGAAParser {
     private val formatoData = SimpleDateFormat("dd/MM/yyyy HH:mm")
 
@@ -59,7 +58,7 @@ class SIGAAParser {
         val nome = document.body().getElementsByClass("nome")[0].text()
         val email = "" // O portal do discente não mostra o email completo
         val urlAvatar = "${urlBase}${
-            document.getElementsByClass("foto")[0].child(0).attr("src").removePrefix("/sigaa")
+        document.getElementsByClass("foto")[0].child(0).attr("src").removePrefix("/sigaa")
         }"
 
         // Disciplinas
@@ -241,8 +240,8 @@ class SIGAAParser {
                     }
 
                     var tipo = ANEXO_DESCONHECIDO
-                    var titulo = ""
-                    var descricao = ""
+                    var titulo: String
+                    var descricao: String
                     var url: String? = null
                     var jIdJspCompleto: String? = null
                     var idObjetoAssociado: String? = null
@@ -384,8 +383,8 @@ class SIGAAParser {
                     val login = ems[2].text().trim()
                     val email = ems[3].text().trim()
                     val urlAvatar = "${urlBase.replace("/sigaa", "")}${
-                        segundaColuna.previousElementSibling()!!
-                            .getElementsByTag("img")[0].attr("src")
+                    segundaColuna.previousElementSibling()!!
+                        .getElementsByTag("img")[0].attr("src")
                     }"
 
                     participantes.add(
@@ -527,7 +526,7 @@ class SIGAAParser {
                     val id = linhaDadosNotas?.getElementsByTag("th")?.get(colunaAtual)?.attr("id")
                         ?.replace("aval_", "") ?: ""
                     val nota = if (!linhaNotas.child(colunaAtual).text()
-                            .contains("-") and linhaNotas.child(colunaAtual).text().isNotEmpty()
+                        .contains("-") and linhaNotas.child(colunaAtual).text().isNotEmpty()
                     ) {
                         linhaNotas.child(colunaAtual).text().replace(",", ".").toFloat()
                     } else {
@@ -554,7 +553,7 @@ class SIGAAParser {
                                 ?: ""
                         notaMaxima =
                             if (linhaDadosNotas?.getElementById("notaAval_$id")?.attr("value")
-                                    ?.isNotEmpty() == true
+                                ?.isNotEmpty() == true
                             ) {
                                 linhaDadosNotas.getElementById("notaAval_$id")!!.attr("value")
                                     .toFloat()
@@ -562,7 +561,7 @@ class SIGAAParser {
                                 (-1).toFloat()
                             }
                         peso = if (linhaDadosNotas?.getElementById("pesoAval_$id")?.attr("value")
-                                ?.isNotEmpty() == true
+                            ?.isNotEmpty() == true
                         ) {
                             linhaDadosNotas.getElementById("pesoAval_$id")!!.attr("value").toFloat()
                         } else {
@@ -803,7 +802,7 @@ class SIGAAParser {
                         if (paragrafoDescricao.text().equals("Baixar arquivo")) {
                             // Botão de baixar arquivo
                             val caminho = paragrafoDescricao.attr("href").replace("/sigaa", "")
-                            urlArquivo = "${urlBase}${caminho}"
+                            urlArquivo = "${urlBase}$caminho"
                         } else {
                             // Texto escrito pelo professor
                             descricao += "${paragrafoDescricao.text()}\n"
