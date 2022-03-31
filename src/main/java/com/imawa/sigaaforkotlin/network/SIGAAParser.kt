@@ -278,9 +278,18 @@ class SIGAAParser {
                         "/sigaa/img/portal_turma/video.png" -> {
                             // Vídeo
                             tipo = ANEXO_VIDEO
-                            titulo = anexo.getElementsByTag("h1")[0].text().trim()
                             descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
-                            url = anexo.getElementsByTag("iframe")[0].attr("src")
+
+                            if (anexo.getElementsByTag("iframe").size > 0) {
+                                // Visualização no SIGAA
+                                titulo = anexo.getElementsByTag("h1")[0].text().trim()
+                                url = anexo.getElementsByTag("iframe")[0].attr("src")
+                            } else {
+                                // Visualização em outro site
+                                val a = anexo.getElementsByTag("a")[0]
+                                titulo = a.text().trim()
+                                url = a.attr("href")
+                            }
                         }
                         "/sigaa/img/porta_arquivos/icones/zip.png", "/sigaa/img/porta_arquivos/icones/pdf.png", "/sigaa/img/porta_arquivos/icones/ppt.png", "/sigaa/img/porta_arquivos/icones/doc.png", "/sigaa/img/porta_arquivos/icones/html.png", "/sigaa/img/porta_arquivos/icones/imagem.png", "/sigaa/img/porta_arquivos/icones/txt.png", "/sigaa/img/porta_arquivos/icones/desconhecido.png" -> {
                             // Arquivo
