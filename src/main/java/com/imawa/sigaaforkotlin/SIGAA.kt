@@ -51,6 +51,7 @@ class SIGAA(private val context: Context) {
         logout()
 
         // Pegar novo sessionId
+        Timber.i("Abrindo página de login")
         networkGet("/verTelaLogin.do")
         sessionId = parser.getSessionId(historyManager.lastResponse!!)
 
@@ -60,6 +61,7 @@ class SIGAA(private val context: Context) {
         Timber.d("Novo sessionId: $sessionId")
 
         // Logar sessionId
+        Timber.i("Enviando formulário de login")
         val formLogin = formBuilder.buildLoginForm(login, senha)
         networkPost("/logar.do", formLogin)
 
@@ -67,7 +69,7 @@ class SIGAA(private val context: Context) {
 
         // Retornar false se for um docente
         if (location?.contains("vinculos.jsf") == true || location?.contains("verMenuPrincipal.do") == true) {
-            Timber.d("Usuário logado é um docente")
+            Timber.i("Usuário logado é um docente")
             return false
         }
 
@@ -84,13 +86,13 @@ class SIGAA(private val context: Context) {
             getPortalDiscente()
 
             if (!parser.isLogado(historyManager.lastBody!!)) {
-                Timber.d("Não foi possível logar")
+                Timber.i("Não foi possível logar")
                 return false
             }
         }
 
         usuario = parser.getUsuarioPortalDiscente(historyManager.lastBody!!, login)
-        Timber.d("Logado como ${usuario!!.nome}")
+        Timber.i("Logado como ${usuario!!.nome}")
 
         return true
     }
@@ -113,7 +115,7 @@ class SIGAA(private val context: Context) {
             Timber.d("Lista de turmas já aberta")
         } else {
             // Abrir lista de turmas
-            Timber.d("Abrindo lista de turmas")
+            Timber.i("Abrindo lista de turmas")
             networkGet("/portais/discente/turmas.jsf")
         }
 
@@ -215,7 +217,7 @@ class SIGAA(private val context: Context) {
         getPaginaPortalDisciplina(arquivo.disciplina, PAGINA_ARQUIVOS)
 
         // Baixar o arquivo
-        Timber.d("Baixando o arquivo ${arquivo.titulo}")
+        Timber.i("Baixando o arquivo ${arquivo.titulo}")
         val formBody = formBuilder.buildDownloadArquivoForm(
             arquivo,
             historyManager.lastDisciplinaJavaxViewState!!
@@ -289,7 +291,7 @@ class SIGAA(private val context: Context) {
             Timber.d("Portal do discente já aberto")
         } else {
             // Abrir portal do discente
-            Timber.d("Abrindo portal do discente")
+            Timber.i("Abrindo portal do discente")
             networkGet("/verPortalDiscente.do")
         }
 
@@ -307,7 +309,7 @@ class SIGAA(private val context: Context) {
                 // Disciplina da página com todas as turmas
                 getAllDisciplinas()
 
-                Timber.d("Abrindo portal da disciplina")
+                Timber.i("Abrindo portal da disciplina")
                 val formBody = formBuilder.buildOpenPortalDisciplinaPelasTurmasForm(
                     disciplina,
                     historyManager.lastJavaxViewState!!
@@ -317,7 +319,7 @@ class SIGAA(private val context: Context) {
                 // Disciplina do portal do discente
                 getPortalDiscente()
 
-                Timber.d("Abrindo portal da disciplina")
+                Timber.i("Abrindo portal da disciplina")
                 val formBody = formBuilder.buildOpenPortalDisciplinaPeloPortalDiscenteForm(
                     disciplina,
                     historyManager.lastJavaxViewState!!
@@ -360,7 +362,7 @@ class SIGAA(private val context: Context) {
                 pagina,
                 historyManager.lastDisciplinaJavaxViewState!!
             )
-            Timber.d("Abrindo a página $pagina no portal da disciplina ${disciplina.nome}")
+            Timber.i("Abrindo a página $pagina no portal da disciplina ${disciplina.nome}")
             val addToHistory = when (pagina) {
                 PAGINA_NOTAS -> false // As páginas que não alterar o javaxViewState não são adicionadas ao histórico
                 else -> true
@@ -378,7 +380,7 @@ class SIGAA(private val context: Context) {
         getPaginaPortalDisciplina(noticia.disciplina, PAGINA_NOTICIAS)
 
         // Abrir a página da notícia
-        Timber.d("Abrindo a página da notícia ${noticia.titulo} no portal da disciplina ${noticia.disciplina.nome}")
+        Timber.i("Abrindo a página da notícia ${noticia.titulo} no portal da disciplina ${noticia.disciplina.nome}")
         val formBody =
             formBuilder.buildOpenNoticiaForm(noticia, historyManager.lastDisciplinaJavaxViewState!!)
         networkPost(
@@ -396,7 +398,7 @@ class SIGAA(private val context: Context) {
         getPaginaPortalDisciplina(conteudo.disciplina, PAGINA_CONTEUDOS)
 
         // Abrir a página do conteúdo
-        Timber.d("Abrindo a página do conteúdo ${conteudo.titulo} no portal da disciplina ${conteudo.disciplina.nome}")
+        Timber.i("Abrindo a página do conteúdo ${conteudo.titulo} no portal da disciplina ${conteudo.disciplina.nome}")
         val formBody = formBuilder.buildOpenConteudoForm(
             conteudo,
             historyManager.lastDisciplinaJavaxViewState!!
@@ -420,7 +422,7 @@ class SIGAA(private val context: Context) {
         getPortalDiscente()
 
         // Abrir página do questionário
-        Timber.d("Abrindo página do questionário ${questionario.titulo}")
+        Timber.i("Abrindo página do questionário ${questionario.titulo}")
         val formBody = formBuilder.buildOpenPaginaQuestionarioPeloPortalDiscenteForm(
             questionario,
             disciplina,
