@@ -2,6 +2,14 @@ package com.imawa.sigaaforkotlin.network
 
 import com.imawa.sigaaforkotlin.SIGAA.Companion.urlBase
 import com.imawa.sigaaforkotlin.models.*
+import com.imawa.sigaaforkotlin.models.Anexo.Companion.ANEXO_ARQUIVO
+import com.imawa.sigaaforkotlin.models.Anexo.Companion.ANEXO_CONTEUDO
+import com.imawa.sigaaforkotlin.models.Anexo.Companion.ANEXO_DESCONHECIDO
+import com.imawa.sigaaforkotlin.models.Anexo.Companion.ANEXO_FORUM
+import com.imawa.sigaaforkotlin.models.Anexo.Companion.ANEXO_QUESTIONARIO
+import com.imawa.sigaaforkotlin.models.Anexo.Companion.ANEXO_REFERENCIA
+import com.imawa.sigaaforkotlin.models.Anexo.Companion.ANEXO_TAREFA
+import com.imawa.sigaaforkotlin.models.Anexo.Companion.ANEXO_VIDEO
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_ARQUIVOS
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_AVALIACOES
 import com.imawa.sigaaforkotlin.models.Disciplina.Companion.PAGINA_CONTEUDOS
@@ -20,6 +28,7 @@ import com.imawa.sigaaforkotlin.models.Usuario.Companion.USUARIO_DISCENTE
 import com.imawa.sigaaforkotlin.models.Usuario.Companion.USUARIO_DOCENTE
 import okhttp3.Response
 import org.jsoup.Jsoup
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -218,14 +227,120 @@ class SIGAAParser {
             val titulo = topico.getElementsByClass("titulo")[0]?.text()?.trim() ?: ""
             val elementoConteudo = topico.getElementsByClass("conteudotopico")[0]
 
-            // Remover os anexos do conteúdo
+            // Obter os anexos
+            val anexos = ArrayList<Anexo>()
+
             for (anexo in elementoConteudo.getElementsByClass("item")) {
+                // Identificar o anexo
+                for (icone in anexo.getElementsByTag("img")) {
+                    val src = icone.attr("src")
+
+                    // Pular o ícone de loading
+                    if (src == "/sigaa/img/indicator.gif") {
+                        continue
+                    }
+
+                    var tipo = ANEXO_DESCONHECIDO
+                    var titulo = ""
+                    var descricao = ""
+                    var url: String? = null
+                    var jIdJspCompleto: String? = null
+                    var idObjetoAssociado: String? = null
+
+                    when (src) {
+                        "/sigaa/ava/img/forumava.png" -> {
+                            // Fórum
+                            tipo = ANEXO_FORUM
+                            val a = anexo.getElementsByTag("a")[0]
+                            titulo = a.text().trim()
+                            descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
+                            val args = a.attr("onclick").split("'")
+                            jIdJspCompleto = args[5]
+                        }
+                        "/sigaa/img/porta_arquivos/icones/conteudo.png" -> {
+                            // Conteúdo
+                            tipo = ANEXO_CONTEUDO
+                            val a = anexo.getElementsByTag("a")[0]
+                            titulo = a.text().trim()
+                            descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
+                            val args = a.attr("onclick").split("'")
+                            jIdJspCompleto = args[5]
+                            idObjetoAssociado = args[11]
+                        }
+                        "/sigaa/img/portal_turma/site_add.png" -> {
+                            // Referência (url)
+                            tipo = ANEXO_REFERENCIA
+                            val a = anexo.getElementsByTag("a")[0]
+                            titulo = a.text().trim()
+                            descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
+                            url = a.attr("href")
+                        }
+                        "/sigaa/img/portal_turma/video.png" -> {
+                            // Vídeo
+                            tipo = ANEXO_VIDEO
+                            titulo = anexo.getElementsByTag("h1")[0].text().trim()
+                            descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
+                            url = anexo.getElementsByTag("iframe")[0].attr("src")
+                        }
+                        "/sigaa/img/porta_arquivos/icones/zip.png", "/sigaa/img/porta_arquivos/icones/pdf.png", "/sigaa/img/porta_arquivos/icones/ppt.png", "/sigaa/img/porta_arquivos/icones/doc.png", "/sigaa/img/porta_arquivos/icones/html.png", "/sigaa/img/porta_arquivos/icones/imagem.png", "/sigaa/img/porta_arquivos/icones/txt.png", "/sigaa/img/porta_arquivos/icones/desconhecido.png" -> {
+                            // Arquivo
+                            tipo = ANEXO_ARQUIVO
+                            val a = anexo.getElementsByTag("a")[0]
+                            titulo = a.text().trim()
+                            descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
+                            val args = a.attr("onclick").split("'")
+                            jIdJspCompleto = args[5]
+                            idObjetoAssociado = args[11]
+                        }
+                        "/sigaa/img/porta_arquivos/icones/tarefa.png" -> {
+                            // Tarefa
+                            tipo = ANEXO_TAREFA
+                            val a = anexo.getElementsByTag("a")[0]
+                            titulo = a.text().trim()
+                            descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
+                            val args = a.attr("onclick").split("'")
+                            jIdJspCompleto = args[5]
+                            idObjetoAssociado = args[11]
+                        }
+                        "/sigaa/ava/img/questionario.png" -> {
+                            // Questionário
+                            tipo = ANEXO_QUESTIONARIO
+                            val a = anexo.getElementsByTag("a")[0]
+                            titulo = a.text().trim()
+                            descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
+                            val args = a.attr("onclick").split("'")
+                            jIdJspCompleto = args[5]
+                            idObjetoAssociado = args[11]
+                        }
+                        else -> {
+                            // Não implementado
+                            Timber.d("Anexo desconhecido: $src")
+                            descricao = anexo.getElementsByClass("descricao-item")[0].text().trim()
+                            anexo.getElementsByClass("descricao-item")[0].remove()
+                            titulo = anexo.text().trim()
+                        }
+                    }
+
+                    anexos.add(
+                        Anexo(
+                            tipo,
+                            titulo,
+                            descricao,
+                            url,
+                            jIdJspCompleto,
+                            idObjetoAssociado,
+                            disciplina
+                        )
+                    )
+                }
+
+                // Remover o anexo do conteúdo
                 anexo.parent()!!.remove()
             }
 
             val htmlConteudo = elementoConteudo.html()
 
-            aulas.add(Aula(titulo, htmlConteudo, disciplina))
+            aulas.add(Aula(titulo, htmlConteudo, anexos, disciplina))
         }
 
         return aulas
@@ -614,10 +729,11 @@ class SIGAAParser {
 
         // Na página de tarefas, podem existir duas tabelas: uma para as tarefas individuais e
         // outra para as tarefas em grupo
-        val tabelas =  document.getElementsByClass("listing")
+        val tabelas = document.getElementsByClass("listing")
 
         for (tabela in tabelas) {
-            val isIndividual = tabela.previousElementSibling()?.text()?.contains("Tarefas Individuais") ?: true
+            val isIndividual =
+                tabela.previousElementSibling()?.text()?.contains("Tarefas Individuais") ?: true
 
             val bodyTabela =
                 tabela.getElementsByTag("tbody").first()
@@ -633,7 +749,8 @@ class SIGAAParser {
                     // Primeira linha
                     val titulo = primeiraLinha.child(1).text().trim()
 
-                    val stringsData = primeiraLinha.child(2).text().trim().replace("h", ":").split(" ")
+                    val stringsData =
+                        primeiraLinha.child(2).text().trim().replace("h", ":").split(" ")
                     val dataInicio = formatoData.parse("${stringsData[1]} ${stringsData[3]}")
                     val dataFim = formatoData.parse("${stringsData[5]} ${stringsData[7]}")
 
