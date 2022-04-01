@@ -1,6 +1,6 @@
 package com.imawa.sigaaforkotlin.network
 
-import com.imawa.sigaaforkotlin.models.Disciplina
+import com.imawa.sigaaforkotlin.entities.Disciplina
 import okhttp3.Response
 import timber.log.Timber
 

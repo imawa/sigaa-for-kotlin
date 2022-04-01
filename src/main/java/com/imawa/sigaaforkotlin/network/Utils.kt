@@ -1,4 +1,4 @@
-package com.imawa.sigaaforkotlin.util
+package com.imawa.sigaaforkotlin.network
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -9,7 +9,7 @@ import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
 
-class NetworkUtils {
+class Utils {
     companion object {
         fun isConnectionOn(context: Context): Boolean {
             val connectivityManager =

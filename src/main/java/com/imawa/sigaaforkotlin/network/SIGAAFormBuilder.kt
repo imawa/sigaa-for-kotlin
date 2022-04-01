@@ -1,6 +1,6 @@
 package com.imawa.sigaaforkotlin.network
 
-import com.imawa.sigaaforkotlin.models.*
+import com.imawa.sigaaforkotlin.entities.*
 import okhttp3.FormBody
 
 /**

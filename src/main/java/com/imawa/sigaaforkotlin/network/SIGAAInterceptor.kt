@@ -4,9 +4,9 @@ import android.content.Context
 import com.imawa.sigaaforkotlin.network.SIGAAException.Companion.INTERNET_INDISPONIVEL
 import com.imawa.sigaaforkotlin.network.SIGAAException.Companion.RESPOSTA_INVALIDA
 import com.imawa.sigaaforkotlin.network.SIGAAException.Companion.SESSAO_EXPIRADA
-import com.imawa.sigaaforkotlin.util.NetworkUtils.Companion.isConnectionOn
-import com.imawa.sigaaforkotlin.util.NetworkUtils.Companion.isInternetAvailable
-import com.imawa.sigaaforkotlin.util.NetworkUtils.Companion.isValidResponse
+import com.imawa.sigaaforkotlin.network.Utils.Companion.isConnectionOn
+import com.imawa.sigaaforkotlin.network.Utils.Companion.isInternetAvailable
+import com.imawa.sigaaforkotlin.network.Utils.Companion.isValidResponse
 import okhttp3.Interceptor
 import okhttp3.Response
 

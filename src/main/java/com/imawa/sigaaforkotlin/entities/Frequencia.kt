@@ -1,4 +1,4 @@
-package com.imawa.sigaaforkotlin.models
+package com.imawa.sigaaforkotlin.entities
 
 /**
  * Representa a lista de frequência de uma disciplina.

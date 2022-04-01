@@ -1,4 +1,4 @@
-package com.imawa.sigaaforkotlin.models
+package com.imawa.sigaaforkotlin.entities
 
 /**
  * Representa uma aula cadastrada em uma disciplina.

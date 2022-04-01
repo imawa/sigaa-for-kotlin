@@ -1,4 +1,4 @@
-package com.imawa.sigaaforkotlin.models
+package com.imawa.sigaaforkotlin.entities
 
 /**
  * Representa um arquivo cadastrado na aba "Arquivos" de uma disciplina.
