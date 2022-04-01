@@ -1,5 +1,8 @@
 package com.imawa.sigaaforkotlin.models
 
+/**
+ * Representa o anexo cadastrado em uma aula.
+ */
 data class Anexo(
     val tipo: Int,
     val titulo: String,

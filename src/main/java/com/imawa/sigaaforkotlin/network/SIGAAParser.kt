@@ -32,6 +32,9 @@ import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Classe com funções para interpretar o conteúdo das páginas do SIGAA.
+ */
 class SIGAAParser {
     private val formatoData = SimpleDateFormat("dd/MM/yyyy HH:mm")
 
@@ -39,7 +42,7 @@ class SIGAAParser {
         response.header("Set-Cookie")?.split("JSESSIONID=")?.get(1)?.split(";")?.get(0)
 
     /**
-     * Retorna o URL para que o cliente foi redirecionado
+     * Retorna o URL para que o cliente foi redirecionado.
      */
     fun getLocation(response: Response): String? = response.priorResponse?.header("Location")
 
@@ -137,9 +140,9 @@ class SIGAAParser {
     }
 
     /**
-     * Retorna os dois pares de String do botão no menu do portal da disciplina
+     * Retorna os dois pares de String do botão no menu do portal da disciplina.
      * Ao clicar em um dos botões no menu da esquerda do portal da disciplina, são enviados dois
-     * pares de valores que indicam a página que deve ser aberta
+     * pares de valores que indicam a página que deve ser aberta.
      */
     fun getArgsBotaoPortalDisciplina(body: String, pagina: Int): ArrayList<ArrayList<String>> {
         val document = Jsoup.parse(body)
@@ -191,16 +194,16 @@ class SIGAAParser {
     }
 
     /**
-     * Retorna o caminho do POST para um botão do menu na esquerda do portal da disciplina
+     * Retorna o caminho do POST para um botão do menu na esquerda do portal da disciplina.
      * Conforme você navega pelo portal da disciplina através do menu da esquerda, esse caminho
-     * se altera
+     * se altera.
      */
     fun getCaminhoBotaoPortalDisciplina(body: String): String =
         Jsoup.parse(body).getElementById("form_nee")?.attr("action")?.replace("/sigaa", "") ?: ""
 
     /**
      * Retorna o caminho do POST para um botão do menu na esquerda do portal da disciplina baseado
-     * no número da página
+     * no número da página.
      */
     fun getCaminhoBotaoPortalDisciplina(pagina: Int): String = when (pagina) {
         PAGINA_PRINCIPAL -> "/ava/index.jsf"
@@ -406,11 +409,10 @@ class SIGAAParser {
     }
 
     /**
-     * Retorna as notícias na página de notícias do portal da disciplina
-     *
-     * As notícias retornadas aqui não possuem conteúdo
+     * Retorna as notícias na página de notícias do portal da disciplina.
+     * As notícias retornadas aqui não possuem conteúdo!
      * Para obter a notícia com todas as informações, é preciso abrir a página individual da notícia
-     * e utilizar o getNoticiaCompletaPaginaNoticia
+     * e utilizar o getNoticiaCompletaPaginaNoticia().
      */
     fun getNoticiasDisciplina(body: String, disciplina: Disciplina): ArrayList<Noticia> {
         val noticias = ArrayList<Noticia>()
@@ -591,11 +593,10 @@ class SIGAAParser {
     }
 
     /**
-     * Retorna os conteúdos na página de conteúdos do portal da disciplina
-     *
-     * Os conteúdos retornados aqui não possuem o conteúdo em si
+     * Retorna os conteúdos na página de conteúdos do portal da disciplina.
+     * Os conteúdos retornados aqui não possuem o conteúdo em si!
      * Para obter o conteúdo em si, é preciso abrir a página individual do conteúdo
-     * e utilizar o getConteudoCompletoPaginaConteudo
+     * e utilizar o getConteudoCompletoPaginaConteudo().
      */
     fun getConteudosDisciplina(body: String, disciplina: Disciplina): ArrayList<Conteudo> {
         val conteudos = ArrayList<Conteudo>()
@@ -837,11 +838,10 @@ class SIGAAParser {
     }
 
     /**
-     * Retorna os questionários na página de questionários do portal da disciplina
-     *
-     * Esta função retorna todos os questionários com isEnviado definido como false
+     * Retorna os questionários na página de questionários do portal da disciplina.
+     * Esta função retorna todos os questionários com isEnviado definido como false!
      * Para obter o questionário com todas as informações, é preciso abrir a página do questionário
-     * e utilizar o getQuestionarioCompletoPaginaQuestionario
+     * e utilizar o getQuestionarioCompletoPaginaQuestionario().
      */
     fun getQuestionariosDisciplina(body: String, disciplina: Disciplina): ArrayList<Questionario> {
         val questionarios = ArrayList<Questionario>()

@@ -1,5 +1,8 @@
 package com.imawa.sigaaforkotlin.models
 
+/**
+ * Representa uma referência cadastrada na aba "Referências" de uma disciplina.
+ */
 data class Referencia(
     val nome: String,
     val tipo: Int,

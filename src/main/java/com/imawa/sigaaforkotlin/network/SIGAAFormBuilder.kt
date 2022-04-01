@@ -3,6 +3,9 @@ package com.imawa.sigaaforkotlin.network
 import com.imawa.sigaaforkotlin.models.*
 import okhttp3.FormBody
 
+/**
+ * Classe com funções para criar o FormBody das solicitações POST.
+ */
 class SIGAAFormBuilder(private val parser: SIGAAParser) {
     fun buildLoginForm(login: String, senha: String): FormBody =
         FormBody.Builder().add("dispatch", "logOn")

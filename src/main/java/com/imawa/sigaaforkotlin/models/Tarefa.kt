@@ -2,6 +2,9 @@ package com.imawa.sigaaforkotlin.models
 
 import java.util.*
 
+/**
+ * Representa uma tarefa cadastrada em uma disciplina.
+ */
 data class Tarefa(
     val id: String,
     val titulo: String,

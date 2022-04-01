@@ -1,5 +1,10 @@
 package com.imawa.sigaaforkotlin.models
 
+/**
+ * Representa um usuário do SIGAA.
+ * Este usuário pode ser o usuário atualmente logado ou algum usuário da página "Participantes" de
+ * uma disciplina.
+ */
 data class Usuario(
     val login: String,
     val matricula: Int?,

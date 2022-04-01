@@ -2,6 +2,9 @@ package com.imawa.sigaaforkotlin.models
 
 import java.util.*
 
+/**
+ * Representa um conteúdo cadastrado na aba "Conteúdos" de uma disciplina.
+ */
 data class Conteudo(
     val id: Int,
     val titulo: String,

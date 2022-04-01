@@ -2,6 +2,9 @@ package com.imawa.sigaaforkotlin.models
 
 import java.util.*
 
+/**
+ * Representa uma notícia cadastrada em uma disciplina.
+ */
 data class Noticia(
     val id: Int,
     val titulo: String,

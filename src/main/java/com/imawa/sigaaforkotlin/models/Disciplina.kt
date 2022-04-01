@@ -1,5 +1,8 @@
 package com.imawa.sigaaforkotlin.models
 
+/**
+ * Representa uma disciplina, também chamada de turma virtual.
+ */
 data class Disciplina(
     val id: String?, // Valor que somente as disciplinas atuais possuem
     val nome: String,

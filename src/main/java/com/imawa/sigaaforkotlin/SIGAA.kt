@@ -26,9 +26,18 @@ import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+/**
+ * Classe com funções para interagir com o SIGAA.
+ */
 class SIGAA(private val context: Context) {
+    /**
+     * Parâmetro que identifica a sessão atual.
+     */
     var sessionId: String? = null
 
+    /**
+     * Representa o usuário atualmente logado.
+     */
     var usuario: Usuario? = null
 
     private val parser = SIGAAParser()
@@ -44,8 +53,8 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Realiza o login no SIGAA com as credenciais inseridas
-     * Retorna um boolean indicando se o login ocorreu com sucesso
+     * Realiza o login no SIGAA com as credenciais inseridas.
+     * Retorna um boolean indicando se o login ocorreu com sucesso.
      */
     fun login(login: String, senha: String): Boolean {
         logout()
@@ -98,7 +107,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Desloga do SIGAA
+     * Desloga do SIGAA.
      */
     fun logout() {
         sessionId = null
@@ -107,7 +116,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna todas as disciplinas que o usuário participa ou participou
+     * Retorna todas as disciplinas que o usuário participa ou participou.
      */
     fun getAllDisciplinas(): ArrayList<Disciplina> {
         if (parser.isListaTurmas(historyManager.lastBody!!)) {
@@ -123,7 +132,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna as aulas cadastradas na disciplina inserida
+     * Retorna as aulas cadastradas na disciplina inserida.
      */
     fun getAulas(disciplina: Disciplina): ArrayList<Aula> {
         getPaginaPortalDisciplina(disciplina, PAGINA_PRINCIPAL)
@@ -131,7 +140,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna os participantes da disciplina inserida
+     * Retorna os participantes da disciplina inserida.
      */
     fun getParticipantes(disciplina: Disciplina): ArrayList<Usuario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_PARTICIPANTES)
@@ -139,7 +148,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna as notícias cadastradas na disciplina inserida
+     * Retorna as notícias cadastradas na disciplina inserida.
      */
     fun getNoticias(disciplina: Disciplina): ArrayList<Noticia> {
         getPaginaPortalDisciplina(disciplina, PAGINA_NOTICIAS)
@@ -156,7 +165,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna a frequência do usuário na disciplina inserida
+     * Retorna a frequência do usuário na disciplina inserida.
      */
     fun getFrequencia(disciplina: Disciplina): Frequencia {
         getPaginaPortalDisciplina(disciplina, PAGINA_FREQUENCIAS)
@@ -164,7 +173,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna as notas do usuário na disciplina inserida
+     * Retorna as notas do usuário na disciplina inserida.
      */
     fun getNotas(disciplina: Disciplina): ArrayList<Nota> {
         val response = getPaginaPortalDisciplina(disciplina, PAGINA_NOTAS)
@@ -172,7 +181,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna o conteúdo cadastrado na disciplina inserida
+     * Retorna o conteúdo cadastrado na disciplina inserida.
      */
     fun getConteudos(disciplina: Disciplina): ArrayList<Conteudo> {
         getPaginaPortalDisciplina(disciplina, PAGINA_CONTEUDOS)
@@ -192,7 +201,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna as referências utilizadas na disciplina inserida
+     * Retorna as referências utilizadas na disciplina inserida.
      */
     fun getReferencias(disciplina: Disciplina): ArrayList<Referencia> {
         getPaginaPortalDisciplina(disciplina, PAGINA_REFERENCIAS)
@@ -200,10 +209,9 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna a lista de arquivos publicados na disciplina inserida
-     *
+     * Retorna a lista de arquivos publicados na disciplina inserida.
      * Os objetos retornados aqui não contêm o conteúdo dos arquivos!
-     * Para obter o conteúdo dos arquivos, utilize downloadArquivo()
+     * Para obter o conteúdo dos arquivos, utilize downloadArquivo().
      */
     fun getArquivos(disciplina: Disciplina): ArrayList<Arquivo> {
         getPaginaPortalDisciplina(disciplina, PAGINA_ARQUIVOS)
@@ -211,7 +219,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna o conteúdo de um arquivo publicado no SIGAA
+     * Retorna o conteúdo de um arquivo publicado no SIGAA.
      */
     fun downloadArquivo(arquivo: Arquivo): File {
         getPaginaPortalDisciplina(arquivo.disciplina, PAGINA_ARQUIVOS)
@@ -239,7 +247,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna as avaliações cadastradas na disciplina inserida
+     * Retorna as avaliações cadastradas na disciplina inserida.
      */
     fun getAvaliacoes(disciplina: Disciplina): ArrayList<Avaliacao> {
         getPaginaPortalDisciplina(disciplina, PAGINA_AVALIACOES)
@@ -247,7 +255,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna as tarefas cadastradas na disciplina inserida
+     * Retorna as tarefas cadastradas na disciplina inserida.
      */
     fun getTarefas(disciplina: Disciplina): ArrayList<Tarefa> {
         getPaginaPortalDisciplina(disciplina, PAGINA_TAREFAS)
@@ -255,7 +263,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Retorna os questionários cadastrados na disciplina inserida
+     * Retorna os questionários cadastrados na disciplina inserida.
      */
     fun getQuestionarios(disciplina: Disciplina): ArrayList<Questionario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_QUESTIONARIOS)
@@ -284,7 +292,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Abre o portal do discente por meio do botão do menu do discente
+     * Abre o portal do discente por meio do botão do menu do discente.
      */
     private fun getPortalDiscente(): Response {
         if (parser.isPortalDiscente(historyManager.lastBody!!)) {
@@ -299,7 +307,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Abre o portal da disciplina inserida
+     * Abre o portal da disciplina inserida.
      */
     private fun getPortalDisciplina(disciplina: Disciplina): Response {
         if (historyManager.currentDisciplina?.frontEndIdTurma != disciplina.frontEndIdTurma) {
@@ -336,7 +344,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Abre uma página da esquerda no portal da disciplina
+     * Abre uma página da esquerda no portal da disciplina.
      */
     private fun getPaginaPortalDisciplina(disciplina: Disciplina, pagina: Int): Response {
         // Abrir o portal da disciplina
@@ -374,7 +382,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Abre a página com todas as informações da notícia inserida
+     * Abre a página com todas as informações da notícia inserida.
      */
     private fun getPaginaNoticia(noticia: Noticia): Response {
         getPaginaPortalDisciplina(noticia.disciplina, PAGINA_NOTICIAS)
@@ -392,7 +400,7 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Abre a página com todas as informações do conteúdo inserido
+     * Abre a página com todas as informações do conteúdo inserido.
      */
     private fun getPaginaConteudo(conteudo: Conteudo): Response {
         getPaginaPortalDisciplina(conteudo.disciplina, PAGINA_CONTEUDOS)
@@ -412,7 +420,8 @@ class SIGAA(private val context: Context) {
     }
 
     /**
-     * Abre a página inicial do questionário inserido (a página com os botões de voltar e de iniciar o questionário)
+     * Abre a página inicial do questionário inserido (a página com os botões de voltar e de iniciar
+     * o questionário).
      */
     private fun getPaginaQuestionario(
         questionario: Questionario,
@@ -480,6 +489,9 @@ class SIGAA(private val context: Context) {
     }
 
     companion object {
+        /**
+         * Indica o URL base do SIGAA, por exemplo, https://sig.ifc.edu.br/sigaa
+         */
         const val urlBase = "https://sig.ifc.edu.br/sigaa"
     }
 }
