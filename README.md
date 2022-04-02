@@ -29,6 +29,7 @@
         <li><a href="#tecnologias-utilizadas">Tecnologias utilizadas</a></li>
       </ul>
     </li>
+    <li><a href="#uso">Uso</a></li>
     <li><a href="#licença">Licença</a></li>
     <li><a href="#contato">Contato</a></li>
     <li><a href="#agradecimentos">Agradecimentos</a></li>
@@ -76,10 +77,33 @@ A API consegue obter do SIGAA:
 <p align="right">(<a href="#top">voltar ao topo</a>)</p>
 
 
+<!-- USAGE EXAMPLES -->
+## Uso
+
+A interação com o sistema é feita por meio da classe SIGAA:
+```kotlin
+val sigaa = SIGAA(this)
+
+if (sigaa.login("usuario", "senha")) {
+    // Logado com sucesso
+    for (disciplina in sigaa.getAllDisciplinas()) {
+        println(sigaa.getNoticias(disciplina))
+        println(sigaa.getTarefas(disciplina))
+    }
+} else {
+    // Não foi possível logar
+}
+```
+
+_Para mais exemplos, confira [/examples/](https://github.com/imawa/sigaa-for-kotlin/tree/master/examples)_
+
+<p align="right">(<a href="#top">voltar ao topo</a>)</p>
+
+
 <!-- LICENSE -->
 ## Licença
 
-Distribuído sob a Liçença MIT. Veja `LICENSE.txt` para mais informações.
+Distribuído sob a Licença MIT. Veja `LICENSE.txt` para mais informações.
 
 <p align="right">(<a href="#top">voltar ao topo</a>)</p>
 
