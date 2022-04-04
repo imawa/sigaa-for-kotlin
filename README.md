@@ -13,6 +13,8 @@
   <p align="center">
     API não oficial para a leitura otimizada de dados do SIGAA
     <br />
+    <a href="https://imawa.github.io/sigaa-for-kotlin/"><strong>Documentação »</strong></a>
+    <br />
   </p>
 </div>
 
