@@ -1,0 +1,1 @@
+sourceset_dependencies='{":SIGAAforKotlin:dokkaHtml/androidTestRelease":[],":SIGAAforKotlin:dokkaHtml/debug":[],":SIGAAforKotlin:dokkaHtml/main":[],":SIGAAforKotlin:dokkaHtml/release":[],":SIGAAforKotlin:dokkaHtml/testFixtures":[],":SIGAAforKotlin:dokkaHtml/testFixturesDebug":[],":SIGAAforKotlin:dokkaHtml/testFixturesRelease":[]}'
