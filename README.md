@@ -29,6 +29,7 @@
         <li><a href="#tecnologias-utilizadas">Tecnologias utilizadas</a></li>
       </ul>
     </li>
+    <li><a href="#instalação">Instalação</a></li>
     <li><a href="#uso">Uso</a></li>
     <li><a href="#licença">Licença</a></li>
     <li><a href="#contato">Contato</a></li>
@@ -73,6 +74,25 @@ A API consegue obter do SIGAA:
 * [OkHttp](https://github.com/square/okhttp/)
 * [Timber](https://github.com/JakeWharton/timber/)
 * [jsoup](https://github.com/jhy/jsoup/)
+
+<p align="right">(<a href="#top">voltar ao topo</a>)</p>
+
+
+<!-- GETTING STARTED -->
+## Instalação
+
+1. Clone o repositório para a pasta raiz do seu projeto
+   ```sh
+   git clone https://github.com/imawa/sigaa-for-kotlin.git
+   ```
+2. Adicione no `settings.gradle`
+   ```groovy
+   include ':sigaa-for-kotlin'
+   ```
+3. Adicione no `build.gradle` da sua aplicação
+   ```groovy
+   implementation project(path: ':sigaa-for-kotlin')
+   ```
 
 <p align="right">(<a href="#top">voltar ao topo</a>)</p>
 
