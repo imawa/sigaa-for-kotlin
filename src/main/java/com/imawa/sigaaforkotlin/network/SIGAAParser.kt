@@ -63,6 +63,9 @@ class SIGAAParser {
         val urlAvatar = "${urlBase}${
         document.getElementsByClass("foto")[0].child(0).attr("src").removePrefix("/sigaa")
         }"
+        val curso =
+            document.getElementsContainingText("Curso:").last()!!.nextElementSibling()!!.text()
+                .trim()
 
         // Disciplinas
         val disciplinasPeriodoAtual = ArrayList<Disciplina>()
@@ -97,6 +100,7 @@ class SIGAAParser {
             nome,
             email,
             urlAvatar,
+            curso,
             USUARIO_DISCENTE,
             disciplinasPeriodoAtual
         )
@@ -389,6 +393,7 @@ class SIGAAParser {
                     segundaColuna.previousElementSibling()!!
                         .getElementsByTag("img")[0].attr("src")
                     }"
+                    val curso = "" // Não tem como identificar o curso dos participantes por aqui
 
                     participantes.add(
                         Usuario(
@@ -397,6 +402,7 @@ class SIGAAParser {
                             nome,
                             email,
                             urlAvatar,
+                            curso,
                             tipoUsuario,
                             ArrayList<Disciplina>()
                         )

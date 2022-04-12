@@ -11,6 +11,7 @@ data class Usuario(
     val nome: String,
     val email: String,
     val urlAvatar: String,
+    val curso: String,
     val tipoUsuario: Int,
     val disciplinasPeriodoAtual: ArrayList<Disciplina>
 ) {
