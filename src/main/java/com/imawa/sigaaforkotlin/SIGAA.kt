@@ -37,6 +37,14 @@ class SIGAA(private val context: Context) {
 
     /**
      * Representa o usuário atualmente logado.
+     *
+     * Observações:
+     *
+     * 1. O e-mail do usuário logado é uma string vazia. Isso acontece porque a página inicial não
+     * mostra o e-mail completo e não é possível abrir a página com os dados do usuário caso o
+     * status esteja como conclúido.
+     * Para obter o e-mail do usuário, você pode consultar os participantes de uma disciplina e
+     * identificar o usuário logado pela matrícula.
      */
     var usuario: Usuario? = null
 
@@ -141,6 +149,11 @@ class SIGAA(private val context: Context) {
 
     /**
      * Retorna os participantes da disciplina inserida.
+     *
+     * Observações:
+     *
+     * 1. O curso dos participantes de uma disciplina é uma string vazia, pois não é possível
+     * identificar o curso pela página de participantes.
      */
     fun getParticipantes(disciplina: Disciplina): ArrayList<Usuario> {
         getPaginaPortalDisciplina(disciplina, PAGINA_PARTICIPANTES)
