@@ -447,21 +447,12 @@ class SIGAAParser {
         val form = document.getElementsByClass("form").first()
 
         val data = formatoData.parse(form?.child(1)?.child(1)?.text()?.trim() ?: "01/01/2010 00:00")
-
-        val conteudoNoticia = form?.getElementsByClass("conteudoNoticia")?.first()
-        var texto = ""
-
-        if (conteudoNoticia != null) {
-            for (linha in conteudoNoticia.child(0).children()) {
-                texto += "${linha.text()}\n"
-            }
-            texto = texto.trim()
-        }
+        val conteudoEmHtml = form?.getElementsByClass("conteudoNoticia")?.first()?.html() ?: ""
 
         return Noticia(
             noticia.id,
             noticia.titulo,
-            texto,
+            conteudoEmHtml,
             data,
             noticia.jIdJsp,
             noticia.jIdJspCompleto,
