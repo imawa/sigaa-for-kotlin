@@ -13,7 +13,7 @@
   <p align="center">
     API não oficial para a leitura otimizada de dados do SIGAA
     <br />
-    <a href="https://imawa.github.io/sigaa-for-kotlin/"><strong>Documentação »</strong></a>
+    <a href="https://winterhazel.github.io/sigaa-for-kotlin/"><strong>Documentação »</strong></a>
     <br />
   </p>
 </div>
@@ -85,7 +85,7 @@ A API consegue obter do SIGAA:
 
 1. Clone o repositório para a pasta raiz do seu projeto
    ```sh
-   git clone https://github.com/imawa/sigaa-for-kotlin.git
+   git clone https://github.com/winterhazel/sigaa-for-kotlin.git
    ```
 2. Adicione no `settings.gradle`
    ```groovy
@@ -117,7 +117,7 @@ if (sigaa.login("usuario", "senha")) {
 }
 ```
 
-_Para mais exemplos, confira [/examples/](https://github.com/imawa/sigaa-for-kotlin/tree/master/examples)_
+_Para mais exemplos, confira [/examples/](https://github.com/winterhazel/sigaa-for-kotlin/tree/master/examples)_
 
 <p align="right">(<a href="#top">voltar ao topo</a>)</p>
 
@@ -150,7 +150,7 @@ Fabricio Duarte Júnior - fabricio.duarte.jr@gmail.com
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[license-shield]: https://img.shields.io/github/license/imawa/sigaa-for-kotlin.svg?style=for-the-badge
-[license-url]: https://github.com/imawa/sigaa-for-kotlin/blob/master/LICENSE.txt
+[license-shield]: https://img.shields.io/github/license/winterhazel/sigaa-for-kotlin.svg?style=for-the-badge
+[license-url]: https://github.com/winterhazel/sigaa-for-kotlin/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/fabricio-duarte-júnior-676601231
