@@ -37,7 +37,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor'
 
     // HTML parser
-    implementation 'org.jsoup:jsoup:1.14.3'
+    implementation 'org.jsoup:jsoup:1.15.1'
 
     // Logging
     implementation 'com.jakewharton.timber:timber:5.0.1'
